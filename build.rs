@@ -1,10 +1,22 @@
 extern crate bindgen;
 
 use std::env;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
+use std::subprocess::Command;
 
+fn build_lightning(ldir: Path, prefix: Path) {
+    Command::new("git")
+        .arg("clone")
+        .arg("--recursive")
+        .arg("git://git.ghostscript.com/mupdf.git")
+        .spawn()
+        .expect("Failed to clone MuPDF")
+        .wait()
+        .expect("Failed to wait for git process");
+}
 
 fn main() {
+
     println!("cargo:rustc-link-lib=lightning");
 
     let bindings = bindgen::Builder::default()
