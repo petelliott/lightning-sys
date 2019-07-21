@@ -2,8 +2,8 @@ extern crate bindgen;
 
 use std::env;
 use std::path::{PathBuf, Path};
-use std::subprocess::Command;
-
+//use std::subprocess::Command;
+/*
 fn build_lightning(ldir: Path, prefix: Path) {
     Command::new("git")
         .arg("clone")
@@ -14,6 +14,7 @@ fn build_lightning(ldir: Path, prefix: Path) {
         .wait()
         .expect("Failed to wait for git process");
 }
+*/
 
 fn main() {
 
