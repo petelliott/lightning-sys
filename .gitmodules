@@ -1,3 +1,0 @@
-[submodule "lightning"]
-	path = lightning
-	url = https://git.savannah.gnu.org/git/lightning.git
