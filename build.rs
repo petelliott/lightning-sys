@@ -10,6 +10,14 @@ fn build_lightning(prefix: &str) {
         .output().unwrap();
 }
 
+fn build_c(prefix: &str) {
+    Command::new("make")
+        .env("PREFIX", prefix)
+        .arg("-C")
+        .arg("C/")
+        .output().unwrap();
+}
+
 /*
 TODO
 fn has_lightning() -> bool {
@@ -37,10 +45,12 @@ fn main() {
     let incdir = prefix.join("include");
 
     build_lightning(prefix.to_str().unwrap());
+    build_c(prefix.to_str().unwrap());
 
     println!("cargo:rustc-link-search=native={}", libdir.to_str().unwrap());
 
     println!("cargo:rustc-link-lib=static=lightning");
+    println!("cargo:rustc-link-lib=static=lightningsys");
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
