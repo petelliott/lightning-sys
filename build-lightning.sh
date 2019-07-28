@@ -8,7 +8,7 @@ tar xvf $OUT_DIR/$RELEASE.tar.gz -C $OUT_DIR/
 PREFIX=$1
 (
     cd $OUT_DIR/$RELEASE
-    CFLAGS="-fPIC" ./configure --prefix=$PREFIX --disable-disassembler
+    ./configure --prefix=$PREFIX --disable-disassembler
     make -j4
     make install
 )
