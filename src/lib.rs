@@ -4,14 +4,16 @@
 #[allow(dead_code)]
 mod bindings;
 
-pub mod jit;
-pub mod jitstate;
+#[macro_use]
+extern crate mashup;
 
+pub mod jit;
 pub use jit::Jit;
+
+pub mod jitstate;
 pub use jitstate::JitState;
 
-pub enum Reg {
-    R(i32),
-    V(i32),
-    F(i32),
-}
+pub mod types;
+pub use types::Reg;
+pub use types::JitNode;
+pub use types::{JitWord, JitUword, JitPointer};

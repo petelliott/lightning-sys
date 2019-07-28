@@ -28,7 +28,7 @@ impl Jit {
             state: unsafe {
                 bindings::jit_new_state()
             },
-            phantom: std::marker::PhantomData,
+            jit: &self,
         }
     }
 
