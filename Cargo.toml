@@ -8,6 +8,7 @@ description = "GNU lightning bindings for rust"
 
 [dependencies]
 mashup = "0.1"
+num-traits = "0.1"
 
 [build-dependencies]
 bindgen = "0.50"

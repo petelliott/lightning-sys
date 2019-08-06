@@ -6,6 +6,7 @@ mod bindings;
 
 #[macro_use]
 extern crate mashup;
+extern crate num_traits;
 
 pub mod jit;
 pub use jit::Jit;
@@ -17,3 +18,4 @@ pub mod types;
 pub use types::Reg;
 pub use types::JitNode;
 pub use types::{JitWord, JitUword, JitPointer};
+pub(crate) use types::ToFFI;
