@@ -25,10 +25,12 @@ fn lightning_built(prefix: &Path) -> bool {
 }
 
 fn _need_bindings_built_res(prefix: &PathBuf) -> Result<bool> {
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+
     let mt1 = fs::metadata(prefix.join("include").join("lightning.h").to_str().unwrap())?.modified()?;
     let mt2 = fs::metadata("C/lightning-sys.h")?.modified()?;
 
-    let targett = fs::metadata(prefix.join("bindings.rs").to_str().unwrap())?.modified()?;
+    let targett = fs::metadata(out_path.join("bindings.rs").to_str().unwrap())?.modified()?;
 
     Ok(targett < mt1 || targett < mt2)
 }
