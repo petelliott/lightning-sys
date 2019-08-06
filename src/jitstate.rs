@@ -32,22 +32,22 @@ macro_rules! jit_impl {
     ( $op:ident, _ ) => { jit_impl_inner!($op, _); };
 
     ( $op:ident, w ) => { jit_impl_inner!($op, w, a: Reg => JitWord); };
-    ( $op:ident, f ) => { jit_impl_inner!($op, f, a: Reg => JitWord); };
-    ( $op:ident, d ) => { jit_impl_inner!($op, d, a: Reg => JitWord); };
-    ( $op:ident, p ) => { jit_impl_inner!($op, p, a: Reg => JitWord); };
+    //( $op:ident, f ) => { jit_impl_inner!($op, f, a: Reg => JitWord); };
+    //( $op:ident, d ) => { jit_impl_inner!($op, d, a: Reg => JitWord); };
+    //( $op:ident, p ) => { jit_impl_inner!($op, p, a: Reg => JitWord); };
 
-    ( $op:ident, _w ) => { jit_impl_inner!($op, w, a: JitWord => _); };
-    ( $op:ident, _f ) => { jit_impl_inner!($op, f, a: f32 => _); };
-    ( $op:ident, _d ) => { jit_impl_inner!($op, d, a: f64 => _); };
-    ( $op:ident, _p ) => { jit_impl_inner!($op, p, a: JitPointer => _); };
+    ( $op:ident, i_w ) => { jit_impl_inner!($op, w, a: JitWord => _); };
+    ( $op:ident, i_f ) => { jit_impl_inner!($op, f, a: f32 => _); };
+    ( $op:ident, i_d ) => { jit_impl_inner!($op, d, a: f64 => _); };
+    ( $op:ident, i_p ) => { jit_impl_inner!($op, p, a: JitPointer => _); };
 
     ( $op:ident, ww ) => { jit_impl_inner!($op, ww, a: Reg => JitWord, b: Reg => JitWord); };
-    ( $op:ident, wp ) => { jit_impl_inner!($op, wp, a: Reg => JitWord, b: Reg => JitWord); };
-    ( $op:ident, fp ) => { jit_impl_inner!($op, fp, a: Reg => JitWord, b: Reg => JitWord); };
-    ( $op:ident, dp ) => { jit_impl_inner!($op, dp, a: Reg => JitWord, b: Reg => JitWord); };
-    ( $op:ident, pw ) => { jit_impl_inner!($op, pw, a: Reg => JitWord, b: Reg => JitWord); };
-    ( $op:ident, wf ) => { jit_impl_inner!($op, wf, a: Reg => JitWord, b: Reg => JitWord); };
-    ( $op:ident, wd ) => { jit_impl_inner!($op, wd, a: Reg => JitWord, b: Reg => JitWord); };
+    //( $op:ident, wp ) => { jit_impl_inner!($op, wp, a: Reg => JitWord, b: Reg => JitWord); };
+    //( $op:ident, fp ) => { jit_impl_inner!($op, fp, a: Reg => JitWord, b: Reg => JitWord); };
+    //( $op:ident, dp ) => { jit_impl_inner!($op, dp, a: Reg => JitWord, b: Reg => JitWord); };
+    //( $op:ident, pw ) => { jit_impl_inner!($op, pw, a: Reg => JitWord, b: Reg => JitWord); };
+    //( $op:ident, wf ) => { jit_impl_inner!($op, wf, a: Reg => JitWord, b: Reg => JitWord); };
+    //( $op:ident, wd ) => { jit_impl_inner!($op, wd, a: Reg => JitWord, b: Reg => JitWord); };
 
     ( $op:ident, i_ww ) => { jit_impl_inner!($op, ww, a: Reg => JitWord, b: JitWord => _); };
     ( $op:ident, i_wp ) => { jit_impl_inner!($op, wp, a: Reg => JitWord, b: JitPointer => _); };
@@ -58,11 +58,11 @@ macro_rules! jit_impl {
     ( $op:ident, i_wd ) => { jit_impl_inner!($op, wd, a: Reg => JitWord, b: f64 => _); };
 
     ( $op:ident, www ) => { jit_impl_inner!($op, www, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
-    ( $op:ident, wwf ) => { jit_impl_inner!($op, wwf, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
-    ( $op:ident, wwd ) => { jit_impl_inner!($op, wwd, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
-    ( $op:ident, pww ) => { jit_impl_inner!($op, pww, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
-    ( $op:ident, pwf ) => { jit_impl_inner!($op, pwf, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
-    ( $op:ident, pwd ) => { jit_impl_inner!($op, pwd, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
+    //( $op:ident, wwf ) => { jit_impl_inner!($op, wwf, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
+    //( $op:ident, wwd ) => { jit_impl_inner!($op, wwd, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
+    //( $op:ident, pww ) => { jit_impl_inner!($op, pww, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
+    //( $op:ident, pwf ) => { jit_impl_inner!($op, pwf, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
+    //( $op:ident, pwd ) => { jit_impl_inner!($op, pwd, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
 
     ( $op:ident, i_www ) => { jit_impl_inner!($op, www, a: Reg => JitWord, b: Reg => JitWord, c: JitWord => _); };
     ( $op:ident, i_wwf ) => { jit_impl_inner!($op, wwf, a: Reg => JitWord, b: Reg => JitWord, c: f32 => _); };
@@ -312,6 +312,32 @@ impl<'a> JitState<'a> {
     jit_impl!(stxi_i, i_www);
     jit_impl!(stxr_l, ww);
     jit_impl!(stxi_l, i_www);
+
+    //TODO: branch/jmp
+
+    jit_impl!(callr, w);
+    jit_impl!(calli, i_p);
+
+    jit_reexport!(prepare);
+    jit_reexport!(pushargr, arg: Reg);
+    jit_reexport!(pushargi, arg: JitWord);
+    jit_reexport!(finishr, arg: Reg);
+    jit_reexport!(finishi, arg: JitPointer; -> JitNode);
+    jit_reexport!(ret);
+    jit_reexport!(retr, rv: Reg);
+    jit_reexport!(reti, rv: JitWord);
+    jit_reexport!(retval_c, rv: Reg);
+    jit_reexport!(retval_uc, rv: Reg);
+    jit_reexport!(retval_s, rv: Reg);
+    jit_reexport!(retval_us, rv: Reg);
+    jit_reexport!(retval_i, rv: Reg);
+    jit_reexport!(retval_ui, rv: Reg);
+    jit_reexport!(retval_l, rv: Reg);
+    jit_reexport!(epilog);
+
+
+    //TODO float instructions
+
 }
 
 #[cfg(test)]
