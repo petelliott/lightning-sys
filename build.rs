@@ -61,6 +61,7 @@ fn main() {
     if need_bindings_built(&prefix) {
         let bindings = bindgen::Builder::default()
             .header("wrapper.h")
+            .rustfmt_bindings(true)
             .clang_arg(format!("-I{}", incdir.to_str().unwrap()))
             .generate()
             .expect("Unable to generate bindings");
