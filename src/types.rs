@@ -9,7 +9,8 @@ pub enum Reg {
 
 pub struct JitNode<'a> {
     pub(crate) node:  *mut bindings::jit_node_t,
-    pub(crate) state: &'a JitState<'a>,
+    pub(crate) phantom: std::marker::PhantomData<&'a ()>,
+    //pub(crate) state: &'a JitState<'a>,
 }
 
 pub type JitWord = bindings::jit_word_t;

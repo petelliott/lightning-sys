@@ -26,6 +26,18 @@ impl<'a> JitState<'a> {
             bindings::_jit_clear_state(self.state);
         }
     }
+
+    pub unsafe fn emit<T>(&mut self) -> &'static T {
+        std::mem::transmute::<&JitPointer, &T>(
+            &bindings::_jit_emit(self.state)
+        )
+    }
+
+    pub fn raw_emit(&mut self) -> JitPointer {
+        unsafe {
+            bindings::_jit_emit(self.state)
+        }
+    }
 }
 
 macro_rules! jit_impl {
@@ -106,10 +118,10 @@ macro_rules! jit_impl_type {
 
 macro_rules! jit_impl_inner {
     ( $op:ident, $ifmt:ident $(, $arg:ident: $type:ty => $target:ty)* ) => {
-        pub fn $op<'b>(&'b mut self $(, $arg: $type)*) -> JitNode<'b> {
+        pub fn $op<'b>(&'b self $(, $arg: $type)*) -> JitNode<'b> {
             JitNode{
                 node: unsafe { jit_new_node!($ifmt)(self.state, jit_code!($op) $(, jit_impl_type!($arg.to_ffi() => $target))*) },
-                state: &*self,
+                phantom: std::marker::PhantomData,
             }
         }
     };
@@ -131,15 +143,15 @@ macro_rules! jit_prefix {
 
 macro_rules! jit_reexport {
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
-        pub fn $fn<'b>(&'b mut self $(, $arg: $typ )*) -> JitNode<'b> {
+        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
             JitNode{
                 node: unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) },
-                state: &*self,
+                phantom: std::marker::PhantomData,
             }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
-        pub fn $fn<'b>(&'b mut self $(, $arg: $typ )*) -> $ret {
+        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> $ret {
             unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) }
         }
     };
