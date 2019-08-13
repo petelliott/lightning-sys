@@ -1,5 +1,4 @@
 use crate::bindings;
-use crate::JitState;
 
 pub enum Reg {
     R(bindings::jit_gpr_t),
@@ -63,38 +62,3 @@ impl<T: FFISafe> ToFFI for T {
         *self
     }
 }
-
-/*
-impl ToFFI for *mut std::ffi::c_void  {
-    type Type = *mut std::ffi::c_void;
-
-    fn to_ffi(&self) -> Self::Type {
-        *self
-    }
-}
-*/
-
-/*
-TODO:
-struct FFIstr {
-    cstr: std::ffi::CString,
-}
-
-impl std::ops::Deref for FFIstr {
-    type Target = *const ::std::os::raw::c_char;
-
-    fn deref<'a>(&'a self) -> &'a Self::Target {
-        &self.cstr.as_ptr()
-    }
-}
-
-impl ToFFI for str {
-    type Type = FFIstr;
-
-    fn to_ffi(&self) -> Self::Type {
-        FFIstr {
-            cstr: std::ffi::CString::new(self).unwrap()
-        }
-    }
-}
-*/

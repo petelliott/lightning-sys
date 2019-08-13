@@ -2,8 +2,9 @@ use crate::bindings;
 use crate::Jit;
 use crate::Reg;
 use crate::JitNode;
-use crate::{JitWord, JitUword, JitPointer};
+use crate::{JitWord, JitPointer};
 use crate::ToFFI;
+use std::ffi::CString;
 
 #[derive(Debug)]
 pub struct JitState<'a> {
@@ -21,19 +22,21 @@ impl<'a> Drop for JitState<'a> {
 
 // implementations of utility functions
 impl<'a> JitState<'a> {
-    pub fn clear(&mut self) {
+    pub fn clear(&self) {
         unsafe {
             bindings::_jit_clear_state(self.state);
         }
     }
 
-    pub unsafe fn emit<T>(&mut self) -> &'static T {
-        std::mem::transmute::<&JitPointer, &T>(
+    // there is no way to require a function type in a trait bound
+    // without specifying the number of arguments
+    pub unsafe fn emit<T: Copy>(&self) -> T {
+        *std::mem::transmute::<&JitPointer, &T>(
             &bindings::_jit_emit(self.state)
         )
     }
 
-    pub fn raw_emit(&mut self) -> JitPointer {
+    pub fn raw_emit(&self) -> JitPointer {
         unsafe {
             bindings::_jit_emit(self.state)
         }
@@ -162,9 +165,25 @@ macro_rules! jit_reexport {
 impl<'a> JitState<'a> {
     jit_impl!(live, w);
     jit_impl!(align, w);
-    //TODO impl for &str
-    //jit_reexport!(name, name: &str);
-    //jit_reexport!(note, note: &str);
+
+    pub fn name<'b>(&'b self, name: &str) -> JitNode<'b> {
+        // I looked at the lightning code, this will be copied
+        let cs = CString::new(name).unwrap();
+        JitNode{
+            node: unsafe { bindings::_jit_name(self.state, cs.as_ptr()) },
+            phantom: std::marker::PhantomData,
+        }
+    }
+
+    pub fn note<'b>(&'b self, file: &str, line: u32) -> JitNode<'b> {
+        // I looked at the lightning code, this will be copied
+        let cs = CString::new(file).unwrap();
+        JitNode{
+            node: unsafe { bindings::_jit_note(self.state, cs.as_ptr(), line as i32) },
+            phantom: std::marker::PhantomData,
+        }
+    }
+
     jit_reexport!(label; -> JitNode);
     jit_reexport!(forward; -> JitNode);
     jit_reexport!(indirect; -> JitNode);
@@ -350,6 +369,7 @@ impl<'a> JitState<'a> {
 
     //TODO float instructions
 
+    jit_reexport!(address, node: &JitNode; -> JitPointer);
 }
 
 #[cfg(test)]
