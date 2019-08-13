@@ -1,14 +1,14 @@
 # lightning-sys
 
 [![crates.io](https://img.shields.io/crates/v/lightning-sys.svg)](https://crates.io/crates/lightning-sys)
-[![docs.rs](https://docs.rs/bindgen/lightning-sys.svg)](https://docs.rs/lightning-sys/)
+[![docs.rs](https://docs.rs/lightning-sys/lightning-sys.svg)](https://docs.rs/lightning-sys/)
 
 Safe gnu lightning bindings for rust
 
 ## Examples
 
 ### a function that increments a number by one
-```
+```rust
 use lightning_sys::{Jit, Reg, JitPointer};
 
 let jit = Jit::new();
@@ -29,7 +29,7 @@ assert_eq!(incr(6), 7);
 ```
 
 ### A simple function call to `printf`
-```
+```rust
 extern crate libc;
 
 use std::ffi::CString;
