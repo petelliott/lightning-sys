@@ -1,7 +1,7 @@
 # lightning-sys
 
 [![crates.io](https://img.shields.io/crates/v/lightning-sys.svg)](https://crates.io/crates/lightning-sys)
-[![docs.rs](https://docs.rs/lightning-sys/lightning-sys.svg)](https://docs.rs/lightning-sys/)
+[![docs.rs](https://docs.rs/lightning-sys/badge.svg)](https://docs.rs/lightning-sys/)
 
 Safe gnu lightning bindings for rust
 
