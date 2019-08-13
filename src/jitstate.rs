@@ -4,7 +4,8 @@ use crate::Reg;
 use crate::JitNode;
 use crate::{JitWord, JitPointer};
 use crate::ToFFI;
-use std::ffi::CString;
+use std::ffi::{CString, c_void};
+use std::ptr::null_mut;
 
 #[derive(Debug)]
 pub struct JitState<'a> {
@@ -159,6 +160,23 @@ macro_rules! jit_reexport {
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*) => { jit_reexport!($fn $(, $arg : $typ)*; -> ()); }
+}
+
+macro_rules! jit_imm {
+    (i) => { JitWord };
+    (r) => { Reg };
+}
+
+
+macro_rules! jit_branch {
+    ( $fn:ident, $t:ident ) => {
+        pub fn $fn<'b>(&'b self, a: Reg, b: jit_imm!($t)) -> JitNode<'b> {
+            JitNode{
+                node: unsafe{ jit_new_node!(pww)(self.state, jit_code!($fn), null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
+                phantom: std::marker::PhantomData,
+            }
+        }
+    };
 }
 
 // implmentations of instructions
@@ -344,7 +362,54 @@ impl<'a> JitState<'a> {
     jit_impl!(stxr_l, ww);
     jit_impl!(stxi_l, i_www);
 
-    //TODO: branch/jmp
+    jit_branch!(bltr, r);
+    jit_branch!(blti, i);
+    jit_branch!(bltr_u, r);
+    jit_branch!(blti_u, i);
+    jit_branch!(bler, r);
+    jit_branch!(blei, i);
+    jit_branch!(beqr, r);
+    jit_branch!(beqi, i);
+    jit_branch!(bger, r);
+    jit_branch!(bgei, i);
+    jit_branch!(bger_u, r);
+    jit_branch!(bgei_u, i);
+    jit_branch!(bgtr, r);
+    jit_branch!(bgti, i);
+    jit_branch!(bgtr_u, r);
+    jit_branch!(bgti_u, i);
+    jit_branch!(bner, r);
+    jit_branch!(bnei, i);
+    jit_branch!(bmsr, r);
+    jit_branch!(bmsi, i);
+    jit_branch!(bmcr, r);
+    jit_branch!(bmci, i);
+    jit_branch!(boaddr, r);
+    jit_branch!(boaddi, i);
+    jit_branch!(boaddr_u, r);
+    jit_branch!(boaddi_u, i);
+    jit_branch!(bxaddr, r);
+    jit_branch!(bxaddi, i);
+    jit_branch!(bxaddr_u, r);
+    jit_branch!(bxaddi_u, i);
+    jit_branch!(bosubr, r);
+    jit_branch!(bosubi, i);
+    jit_branch!(bosubr_u, r);
+    jit_branch!(bosubi_u, i);
+    jit_branch!(bxsubr, r);
+    jit_branch!(bxsubi, i);
+    jit_branch!(bxsubr_u, r);
+    jit_branch!(bxsubi_u, i);
+
+    jit_impl!(jmpr, w);
+
+    pub fn jmpi<'b>(&'b self) -> JitNode<'b> {
+        // I looked at the lightning code, this will be copied
+        JitNode{
+            node: unsafe { jit_new_node!(p)(self.state, jit_code!(jmpi), std::ptr::null_mut::<c_void >()) },
+            phantom: std::marker::PhantomData,
+        }
+    }
 
     jit_impl!(callr, w);
     jit_impl!(calli, i_p);
