@@ -4,7 +4,6 @@ use std::sync::atomic;
 
 use crate::bindings;
 use crate::JitState;
-use crate::Reg;
 
 #[derive(Debug)]
 pub struct Jit;
@@ -50,27 +49,6 @@ impl Jit {
         }
     }
 
-    pub(crate) fn _get_reg(&self, r: Reg) -> bindings::jit_gpr_t {
-        match r {
-            Reg::R(i) => if i < self.r_num() {
-                unsafe { bindings::lgsys_jit_r(i) }
-            } else {
-                panic!("register 'R{}' is not supported", i);
-            },
-
-            Reg::V(i) => if i < self.v_num() {
-                unsafe { bindings::lgsys_jit_v(i) }
-            } else {
-                panic!("register 'R{}' is not supported", i);
-            },
-
-            Reg::F(i) => if i < self.f_num() {
-                unsafe { bindings::lgsys_jit_f(i) }
-            } else {
-                panic!("register 'R{}' is not supported", i);
-            },
-        }
-    }
 }
 
 impl Drop for Jit {
@@ -86,6 +64,7 @@ impl Drop for Jit {
 mod tests {
     use crate::Jit;
     use crate::Reg;
+    use crate::types::ToFFI;
 
     #[test]
     fn test_jit() {
@@ -110,19 +89,19 @@ mod tests {
     }
 
     #[test]
-    fn test_get_reg() {
+    fn test_to_ffi() {
         let jit = Jit::new();
 
-        assert!(std::panic::catch_unwind(|| jit._get_reg(Reg::R(jit.r_num()))).is_err());
-        jit._get_reg(Reg::R(jit.r_num()-1));
-        jit._get_reg(Reg::R(0));
+        assert!(std::panic::catch_unwind(|| Reg::R(jit.r_num()).to_ffi()).is_err());
+        Reg::R(jit.r_num()-1).to_ffi();
+        Reg::R(0).to_ffi();
 
-        assert!(std::panic::catch_unwind(|| jit._get_reg(Reg::V(jit.v_num()))).is_err());
-        jit._get_reg(Reg::V(jit.v_num()-1));
-        jit._get_reg(Reg::V(0));
+        assert!(std::panic::catch_unwind(|| Reg::V(jit.v_num()).to_ffi()).is_err());
+        Reg::V(jit.v_num()-1).to_ffi();
+        Reg::V(0).to_ffi();
 
-        assert!(std::panic::catch_unwind(|| jit._get_reg(Reg::F(jit.f_num()))).is_err());
-        jit._get_reg(Reg::F(jit.f_num()-1));
-        jit._get_reg(Reg::F(0));
+        assert!(std::panic::catch_unwind(|| Reg::F(jit.f_num()).to_ffi()).is_err());
+        Reg::F(jit.f_num()-1).to_ffi();
+        Reg::F(0).to_ffi();
     }
 }

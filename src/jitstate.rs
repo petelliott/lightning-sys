@@ -435,6 +435,9 @@ impl<'a> JitState<'a> {
     //TODO float instructions
 
     jit_reexport!(address, node: &JitNode; -> JitPointer);
+
+    jit_reexport!(patch, instr: &JitNode);
+    jit_reexport!(patch_at, instr: &JitNode, target: &JitNode);
 }
 
 #[cfg(test)]

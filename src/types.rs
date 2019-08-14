@@ -1,4 +1,6 @@
 use crate::bindings;
+use std::ptr::null_mut;
+use std::ffi::c_void;
 
 pub enum Reg {
     R(bindings::jit_gpr_t),
@@ -16,6 +18,7 @@ pub type JitWord = bindings::jit_word_t;
 pub type JitUword = bindings::jit_uword_t;
 pub type JitPointer = bindings::jit_pointer_t;
 
+pub const NULL: JitPointer = null_mut::<c_void>();
 
 pub(crate) trait ToFFI {
     type Type;
@@ -28,9 +31,23 @@ impl ToFFI for Reg {
     //TODO: safe conversion
     fn to_ffi(&self) -> Self::Type {
         match self {
-            Reg::R(i) => *i,
-            Reg::V(i) => *i,
-            Reg::F(i) => *i,
+            Reg::R(i) => if *i < unsafe { bindings::lgsys_JIT_R_NUM } {
+                unsafe { bindings::lgsys_jit_r(*i) }
+            } else {
+                panic!("register 'R{}' is not supported", *i);
+            },
+
+            Reg::V(i) => if *i < unsafe { bindings::lgsys_JIT_V_NUM } {
+                unsafe { bindings::lgsys_jit_v(*i) }
+            } else {
+                panic!("register 'V{}' is not supported", i);
+            },
+
+            Reg::F(i) => if *i < unsafe { bindings::lgsys_JIT_F_NUM } {
+                unsafe { bindings::lgsys_jit_f(*i) }
+            } else {
+                panic!("register 'F{}' is not supported", i);
+            },
         }
     }
 }
