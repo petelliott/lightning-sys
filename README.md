@@ -9,19 +9,18 @@ Safe gnu lightning bindings for rust
 
 ### a function that increments a number by one
 ```rust
-use lightning_sys::{Jit, Reg, JitPointer};
+use lightning_sys::{Jit, Reg, JitPointer, JitWord};
 
 let jit = Jit::new();
 let js = jit.new_state();
 
 js.prolog();
 let inarg = js.arg();
-//TODO: use regular getarg
-js.getarg_i(Reg::R(0), &inarg);
+js.getarg(Reg::R(0), &inarg);
 js.addi(Reg::R(0), Reg::R(0), 1);
 js.retr(Reg::R(0));
 
-let incr = unsafe { js.emit::<extern fn(i32) -> i32>() };
+let incr = unsafe { js.emit::<extern fn(JitWord) -> JitWord>() };
 js.clear();
 
 assert_eq!(incr(5), 6);
@@ -47,8 +46,7 @@ fn main() {
     let start = js.note(file!(), line!());
     js.prolog();
     let inarg = js.arg();
-    //TODO: use regular getarg
-    js.getarg_i(Reg::R(1), &inarg);
+    js.getarg(Reg::R(1), &inarg);
     js.prepare();
     js.pushargi(cs.as_ptr() as JitWord);
     js.ellipsis();
@@ -58,7 +56,7 @@ fn main() {
     js.epilog();
     let end = js.note(file!(), line!());
 
-    let my_function = unsafe{ js.emit::<extern fn(i32)>() };
+    let my_function = unsafe{ js.emit::<extern fn(JitWord)>() };
     /* call the generated code, passing its size as argument */
     my_function((js.address(&end) as u64 - js.address(&start) as u64).try_into().unwrap());
     js.clear();
@@ -79,8 +77,7 @@ fn main() {
     let label = js.label();
                 js.prolog();
     let inarg = js.arg();
-                //TODO: use regular getarg
-                js.getarg_i(Reg::R(0), &inarg);
+                js.getarg(Reg::R(0), &inarg);
     let zero  = js.beqi(Reg::R(0), 0);
                 js.movr(Reg::V(0), Reg::R(0));
                 js.movi(Reg::R(0), 1);
@@ -91,14 +88,12 @@ fn main() {
                 js.pushargr(Reg::V(1));
     let call  = js.finishi(NULL);
                 js.patch_at(&call, &label);
-                //TODO: use normal retval
-                js.retval_i(Reg::V(1));
+                js.retval(Reg::V(1));
                 js.prepare();
                 js.pushargr(Reg::V(2));
     let call2 = js.finishi(NULL);
                 js.patch_at(&call2, &label);
-                //TODO: use normal retval
-                js.retval_i(Reg::R(1));
+                js.retval(Reg::R(1));
                 js.addr(Reg::R(0), Reg::R(0), Reg::V(1));
 
                 js.patch(&refr);
@@ -106,7 +101,7 @@ fn main() {
                 js.retr(Reg::R(0));
                 js.epilog();
 
-    let fib = unsafe{ js.emit::<extern fn(i32) -> i32>() };
+    let fib = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
     js.clear();
 
     println!("fib({})={}", 32, fib(32));
