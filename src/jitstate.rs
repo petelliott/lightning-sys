@@ -154,6 +154,11 @@ macro_rules! jit_reexport {
             }
         }
     };
+    ( $fn:ident $(, $arg:ident : $typ:ty )*; -> bool) => {
+        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> bool {
+            unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) != 0 }
+        }
+    };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
         pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> $ret {
             unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) }
@@ -508,10 +513,13 @@ impl<'a> JitState<'a> {
     jit_alias!(retval_l => retval, rv: Reg);
     jit_reexport!(epilog);
 
-
     //TODO float instructions
 
     jit_reexport!(address, node: &JitNode; -> JitPointer);
+
+    jit_reexport!(forward_p, node: &JitNode; -> bool);
+    jit_reexport!(indirect_p, node: &JitNode; -> bool);
+    jit_reexport!(target_p, node: &JitNode; -> bool);
 
     jit_reexport!(patch, instr: &JitNode);
     jit_reexport!(patch_at, instr: &JitNode, target: &JitNode);

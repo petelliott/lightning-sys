@@ -158,6 +158,7 @@
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
 #[allow(dead_code)]
+#[allow(improper_ctypes)] // TODO
 mod bindings;
 
 #[macro_use]
