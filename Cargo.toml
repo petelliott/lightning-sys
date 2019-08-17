@@ -1,6 +1,6 @@
 [package]
 name = "lightning-sys"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Peter Elliott <pelliott@ualberta.ca>"]
 edition = "2018"
 license = "LGPL-3.0-or-later"
