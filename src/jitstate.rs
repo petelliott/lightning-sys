@@ -629,8 +629,9 @@ impl<'a> JitState<'a> {
     jit_branch!(bungtr_f, r);
     jit_branch!(bungti_f, f);
     jit_branch!(bordr_f, r);
-    jit_branch!(bunordi_f, f);
+    jit_branch!(bordi_f, f);
     jit_branch!(bunordr_f, r);
+    jit_branch!(bunordi_f, f);
 
     jit_reexport!(pushargr_f, reg: Reg);
     jit_reexport!(pushargi_f, imm: f32);
@@ -639,3 +640,108 @@ impl<'a> JitState<'a> {
     jit_reexport!(retval_f, reg: Reg);
 }
 
+/// implmentations of 64-bit float instructions
+impl<'a> JitState<'a> {
+    jit_reexport!(arg_d; -> JitNode);
+    jit_reexport!(getarg_d, reg: Reg, arg: &JitNode);
+    jit_reexport!(putargr_d, reg: Reg, arg: &JitNode);
+    jit_reexport!(putargi_d, imm: f64, arg: &JitNode);
+
+    jit_impl!(addr_d, www);
+    jit_impl!(addi_d, i_wwd);
+    jit_impl!(subr_d, www);
+    jit_impl!(subi_d, i_wwd);
+    //TODO: rsbr_d
+    jit_impl!(mulr_d, www);
+    jit_impl!(muli_d, i_wwd);
+    jit_impl!(divr_d, www);
+    jit_impl!(divi_d, i_wwd);
+    jit_impl!(negr_d, ww);
+    jit_impl!(absr_d, ww);
+    jit_impl!(sqrtr_d, ww);
+
+    jit_impl!(ltr_d, www);
+    jit_impl!(lti_d, i_wwd);
+    jit_impl!(ler_d, www);
+    jit_impl!(lei_d, i_wwd);
+    jit_impl!(eqr_d, www);
+    jit_impl!(eqi_d, i_wwd);
+    jit_impl!(ger_d, www);
+    jit_impl!(gei_d, i_wwd);
+    jit_impl!(gtr_d, www);
+    jit_impl!(gti_d, i_wwd);
+    jit_impl!(ner_d, www);
+    jit_impl!(nei_d, i_wwd);
+    jit_impl!(unltr_d, www);
+    jit_impl!(unlti_d, i_wwd);
+    jit_impl!(unler_d, www);
+    jit_impl!(unlei_d, i_wwd);
+    jit_impl!(uneqr_d, www);
+    jit_impl!(uneqi_d, i_wwd);
+    jit_impl!(unger_d, www);
+    jit_impl!(ungei_d, i_wwd);
+    jit_impl!(ungtr_d, www);
+    jit_impl!(ungti_d, i_wwd);
+    jit_impl!(ltgtr_d, www);
+    jit_impl!(ltgti_d, i_wwd);
+    jit_impl!(ordr_d, www);
+    jit_impl!(ordi_d, i_wwd);
+    jit_impl!(unordr_d, www);
+    jit_impl!(unordi_d, i_wwd);
+
+    jit_impl!(truncr_d_i, ww);
+    #[cfg(target_pointer_width = "64")]
+    jit_impl!(truncr_d_l, ww);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(truncr_d_i => truncr_d, int: Reg, float: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(truncr_d_l => truncr_d, int: Reg, float: Reg; -> JitNode);
+
+    jit_impl!(extr_d, ww);
+    jit_impl!(extr_f_d, ww);
+    jit_impl!(movr_d, ww);
+    jit_impl!(movi_d, i_wd);
+
+    jit_impl!(ldr_d, ww);
+    jit_impl!(ldi_d, i_wp);
+    jit_impl!(ldxr_d, www);
+    jit_impl!(ldxi_d, i_www);
+
+    jit_impl!(str_d, ww);
+    jit_impl!(sti_d, i_pw);
+    jit_impl!(stxr_d, www);
+    jit_impl!(stxi_d, i_www);
+
+    jit_branch!(bltr_d, r);
+    jit_branch!(blti_d, d);
+    jit_branch!(bler_d, r);
+    jit_branch!(blei_d, d);
+    jit_branch!(beqr_d, r);
+    jit_branch!(beqi_d, d);
+    jit_branch!(bger_d, r);
+    jit_branch!(bgei_d, d);
+    jit_branch!(bgtr_d, r);
+    jit_branch!(bgti_d, d);
+    jit_branch!(bner_d, r);
+    jit_branch!(bnei_d, d);
+    jit_branch!(bunltr_d, r);
+    jit_branch!(bunlti_d, d);
+    jit_branch!(bunler_d, r);
+    jit_branch!(bunlei_d, d);
+    jit_branch!(buneqr_d, r);
+    jit_branch!(buneqi_d, d);
+    jit_branch!(bunger_d, r);
+    jit_branch!(bungei_d, d);
+    jit_branch!(bungtr_d, r);
+    jit_branch!(bungti_d, d);
+    jit_branch!(bordr_d, r);
+    jit_branch!(bordi_d, d);
+    jit_branch!(bunordr_d, r);
+    jit_branch!(bunordi_d, d);
+
+    jit_reexport!(pushargr_d, reg: Reg);
+    jit_reexport!(pushargi_d, imm: f64);
+    jit_reexport!(retr_d, reg: Reg);
+    jit_reexport!(reti_d, imm: f64);
+    jit_reexport!(retval_d, reg: Reg);
+}
