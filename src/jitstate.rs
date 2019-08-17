@@ -21,28 +21,6 @@ impl<'a> Drop for JitState<'a> {
     }
 }
 
-// implementations of utility functions
-impl<'a> JitState<'a> {
-    pub fn clear(&self) {
-        unsafe {
-            bindings::_jit_clear_state(self.state);
-        }
-    }
-
-    // there is no way to require a function type in a trait bound
-    // without specifying the number of arguments
-    pub unsafe fn emit<T: Copy>(&self) -> T {
-        *std::mem::transmute::<&JitPointer, &T>(
-            &bindings::_jit_emit(self.state)
-        )
-    }
-
-    pub fn raw_emit(&self) -> JitPointer {
-        unsafe {
-            bindings::_jit_emit(self.state)
-        }
-    }
-}
 
 macro_rules! jit_impl {
     ( $op:ident, _ ) => { jit_impl_inner!($op, _); };
@@ -170,8 +148,9 @@ macro_rules! jit_reexport {
 macro_rules! jit_imm {
     (i) => { JitWord };
     (r) => { Reg };
+    (f) => { f32 };
+    (d) => { f64 };
 }
-
 
 macro_rules! jit_branch {
     ( $fn:ident, $t:ident ) => {
@@ -198,7 +177,45 @@ macro_rules! jit_alias {
     ( $targ:ident => $new:ident $(, $arg:ident : $typ:ty )*) => { jit_alias!($targ => $new $(, $arg : $typ)*; -> ()); }
 }
 
-// implmentations of instructions
+/// `JitState` utility methods
+impl<'a> JitState<'a> {
+    pub fn clear(&self) {
+        unsafe {
+            bindings::_jit_clear_state(self.state);
+        }
+    }
+
+    // there is no way to require a function type in a trait bound
+    // without specifying the number of arguments
+    pub unsafe fn emit<T: Copy>(&self) -> T {
+        *std::mem::transmute::<&JitPointer, &T>(
+            &bindings::_jit_emit(self.state)
+        )
+    }
+
+    pub fn raw_emit(&self) -> JitPointer {
+        unsafe {
+            bindings::_jit_emit(self.state)
+        }
+    }
+
+    jit_reexport!(address, node: &JitNode; -> JitPointer);
+
+    jit_reexport!(forward_p, node: &JitNode; -> bool);
+    jit_reexport!(indirect_p, node: &JitNode; -> bool);
+    jit_reexport!(target_p, node: &JitNode; -> bool);
+
+    jit_reexport!(patch, instr: &JitNode);
+    jit_reexport!(patch_at, instr: &JitNode, target: &JitNode);
+    jit_reexport!(patch_abs, instr: &JitNode, target: JitPointer);
+    jit_reexport!(realize);
+
+    // TODO: alternate code and data buffers
+
+    jit_reexport!(print);
+}
+
+/// implmentations of general instructions
 impl<'a> JitState<'a> {
     jit_impl!(live, w);
     jit_impl!(align, w);
@@ -513,41 +530,112 @@ impl<'a> JitState<'a> {
     jit_alias!(retval_l => retval, rv: Reg);
     jit_reexport!(epilog);
 
-    //TODO float instructions
-
-    jit_reexport!(address, node: &JitNode; -> JitPointer);
-
-    jit_reexport!(forward_p, node: &JitNode; -> bool);
-    jit_reexport!(indirect_p, node: &JitNode; -> bool);
-    jit_reexport!(target_p, node: &JitNode; -> bool);
-
-    jit_reexport!(patch, instr: &JitNode);
-    jit_reexport!(patch_at, instr: &JitNode, target: &JitNode);
-    jit_reexport!(patch_abs, instr: &JitNode, target: JitPointer);
-    jit_reexport!(realize);
-
-    // TODO: alternate code and data buffers
-
     jit_reexport!(frame, size: i32);
     jit_reexport!(tramp, fsize: i32);
-    jit_reexport!(print);
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::Jit;
+/// implmentations of 32-bit float instructions
+impl<'a> JitState<'a> {
+    jit_reexport!(arg_f; -> JitNode);
+    jit_reexport!(getarg_f, reg: Reg, arg: &JitNode);
+    jit_reexport!(putargr_f, reg: Reg, arg: &JitNode);
+    jit_reexport!(putargi_f, imm: f32, arg: &JitNode);
 
-    #[test]
-    fn test_jit() {
-        {
-            let _jit = Jit::new();
-            assert!(std::panic::catch_unwind(|| Jit::new()).is_err());
-        }
+    jit_impl!(addr_f, www);
+    jit_impl!(addi_f, i_wwf);
+    jit_impl!(subr_f, www);
+    jit_impl!(subi_f, i_wwf);
+    //TODO: rsbr_f
+    jit_impl!(mulr_f, www);
+    jit_impl!(muli_f, i_wwf);
+    jit_impl!(divr_f, www);
+    jit_impl!(divi_f, i_wwf);
+    jit_impl!(negr_f, ww);
+    jit_impl!(absr_f, ww);
+    jit_impl!(sqrtr_f, ww);
 
-        {
-            let _jit = Jit::new();
-            assert!(std::panic::catch_unwind(|| Jit::new()).is_err());
-        }
+    jit_impl!(ltr_f, www);
+    jit_impl!(lti_f, i_wwf);
+    jit_impl!(ler_f, www);
+    jit_impl!(lei_f, i_wwf);
+    jit_impl!(eqr_f, www);
+    jit_impl!(eqi_f, i_wwf);
+    jit_impl!(ger_f, www);
+    jit_impl!(gei_f, i_wwf);
+    jit_impl!(gtr_f, www);
+    jit_impl!(gti_f, i_wwf);
+    jit_impl!(ner_f, www);
+    jit_impl!(nei_f, i_wwf);
+    jit_impl!(unltr_f, www);
+    jit_impl!(unlti_f, i_wwf);
+    jit_impl!(unler_f, www);
+    jit_impl!(unlei_f, i_wwf);
+    jit_impl!(uneqr_f, www);
+    jit_impl!(uneqi_f, i_wwf);
+    jit_impl!(unger_f, www);
+    jit_impl!(ungei_f, i_wwf);
+    jit_impl!(ungtr_f, www);
+    jit_impl!(ungti_f, i_wwf);
+    jit_impl!(ltgtr_f, www);
+    jit_impl!(ltgti_f, i_wwf);
+    jit_impl!(ordr_f, www);
+    jit_impl!(ordi_f, i_wwf);
+    jit_impl!(unordr_f, www);
+    jit_impl!(unordi_f, i_wwf);
 
-    }
+    jit_impl!(truncr_f_i, ww);
+    #[cfg(target_pointer_width = "64")]
+    jit_impl!(truncr_f_l, ww);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(truncr_f_i => truncr_f, int: Reg, float: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(truncr_f_l => truncr_f, int: Reg, float: Reg; -> JitNode);
+
+    jit_impl!(extr_f, ww);
+    jit_impl!(extr_d_f, ww);
+    jit_impl!(movr_f, ww);
+    jit_impl!(movi_f, i_wf);
+
+    jit_impl!(ldr_f, ww);
+    jit_impl!(ldi_f, i_wp);
+    jit_impl!(ldxr_f, www);
+    jit_impl!(ldxi_f, i_www);
+
+    jit_impl!(str_f, ww);
+    jit_impl!(sti_f, i_pw);
+    jit_impl!(stxr_f, www);
+    jit_impl!(stxi_f, i_www);
+
+    jit_branch!(bltr_f, r);
+    jit_branch!(blti_f, f);
+    jit_branch!(bler_f, r);
+    jit_branch!(blei_f, f);
+    jit_branch!(beqr_f, r);
+    jit_branch!(beqi_f, f);
+    jit_branch!(bger_f, r);
+    jit_branch!(bgei_f, f);
+    jit_branch!(bgtr_f, r);
+    jit_branch!(bgti_f, f);
+    jit_branch!(bner_f, r);
+    jit_branch!(bnei_f, f);
+    jit_branch!(bunltr_f, r);
+    jit_branch!(bunlti_f, f);
+    jit_branch!(bunler_f, r);
+    jit_branch!(bunlei_f, f);
+    jit_branch!(buneqr_f, r);
+    jit_branch!(buneqi_f, f);
+    jit_branch!(bunger_f, r);
+    jit_branch!(bungei_f, f);
+    jit_branch!(bungtr_f, r);
+    jit_branch!(bungti_f, f);
+    jit_branch!(bordr_f, r);
+    jit_branch!(bunordi_f, f);
+    jit_branch!(bunordr_f, r);
+
+    jit_reexport!(pushargr_f, reg: Reg);
+    jit_reexport!(pushargi_f, imm: f32);
+    jit_reexport!(retr_f, reg: Reg);
+    jit_reexport!(reti_f, imm: f32);
+    jit_reexport!(retval_f, reg: Reg);
 }
+
