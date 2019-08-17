@@ -152,6 +152,11 @@
 //!     js.clear();
 //!
 //!     println!("factorial({}) = {}", 5, factorial(5));
+//!     assert_eq!(1, factorial(1));
+//!     assert_eq!(2, factorial(2));
+//!     assert_eq!(6, factorial(3));
+//!     assert_eq!(24, factorial(4));
+//!     assert_eq!(120, factorial(5));
 //! }
 //! ```
 #[allow(non_upper_case_globals)]
