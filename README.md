@@ -112,6 +112,54 @@ fn main() {
 }
 ```
 
+### Tail Call Optimized factorial
+```rust
+use lightning_sys::{Jit, JitWord, Reg, NULL};
+
+fn main() {
+    let jit = Jit::new();
+    let js = jit.new_state();
+
+    let fact = js.forward();
+
+                js.prolog();
+    let inarg = js.arg();
+                js.getarg(Reg::R(0), &inarg);
+                js.prepare();
+                js.pushargi(1);
+                js.pushargr(Reg::R(0));
+    let call  = js.finishi(NULL);
+                js.patch_at(&call, &fact);
+
+                js.retval(Reg::R(0));
+                js.retr(Reg::R(0));
+                js.epilog();
+
+    js.link(&fact);
+                js.prolog();
+                js.frame(16);
+    let f_ent = js.label(); // TCO entry point
+    let ac    = js.arg();
+    let ina   = js.arg();
+                js.getarg(Reg::R(0), &ac);
+                js.getarg(Reg::R(1), &ina);
+    let f_out = js.blei(Reg::R(1), 1);
+                js.mulr(Reg::R(0), Reg::R(0), Reg::R(1));
+                js.putargr(Reg::R(0), &ac);
+                js.subi(Reg::R(1), Reg::R(1), 1);
+                js.putargr(Reg::R(1), &ina);
+    let jump  = js.jmpi(); // tail call optimiation
+                js.patch_at(&jump, &f_ent);
+                js.patch(&f_out);
+                js.retr(Reg::R(0));
+
+    let factorial = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
+    js.clear();
+
+    println!("factorial({}) = {}", 5, factorial(5));
+}
+```
+
 ## known issues:
 
 - tests must be run like `cargo test -- --test-threads=1`

@@ -515,6 +515,14 @@ impl<'a> JitState<'a> {
 
     jit_reexport!(patch, instr: &JitNode);
     jit_reexport!(patch_at, instr: &JitNode, target: &JitNode);
+    jit_reexport!(patch_abs, instr: &JitNode, target: JitPointer);
+    jit_reexport!(realize);
+
+    // TODO: alternate code and data buffers
+
+    jit_reexport!(frame, size: i32);
+    jit_reexport!(tramp, fsize: i32);
+    jit_reexport!(print);
 }
 
 #[cfg(test)]
