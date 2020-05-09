@@ -10,14 +10,6 @@ fn build_lightning(prefix: &str) {
         .output().unwrap();
 }
 
-fn build_c(prefix: &str) {
-    Command::new("make")
-        .env("PREFIX", prefix)
-        .arg("-C")
-        .arg("C/")
-        .output().unwrap();
-}
-
 fn lightning_built(prefix: &Path) -> bool {
     prefix.exists()
 }
@@ -31,15 +23,14 @@ fn main() {
     if !lightning_built(&prefix) {
         build_lightning(prefix.to_str().unwrap());
     }
-    build_c(prefix.to_str().unwrap());
+    cc::Build::new()
+        .include(incdir.clone())
+        .file("C/register.c")
+        .compile("lightningsys");
 
     println!("cargo:rustc-link-search=native={}", libdir.to_str().unwrap());
 
     println!("cargo:rustc-link-lib=static=lightning");
-    println!("cargo:rustc-link-lib=static=lightningsys");
-
-    // Tell cargo to rerun the build if these files changed.
-    println!("cargo:rerun-if-changed=C/lightning-sys.h");
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
