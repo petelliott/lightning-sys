@@ -13,6 +13,7 @@ documentation = "https://docs.rs/lightning-sys"
 mashup = "0.1"
 num-traits = "0.1"
 libc = "0.2"
+lazy_static = "1.4.0"
 
 [build-dependencies]
 bindgen = "0.53"
