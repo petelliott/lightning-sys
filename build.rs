@@ -37,6 +37,12 @@ fn main() {
         // Tell bindgen to regenerate bindings if the wrapper.h's contents or transitively
         // included files change.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .whitelist_function(".+_jit")
+        .whitelist_function("_?jit_.*")
+        .whitelist_type("_?jit_.*")
+        .whitelist_var("_?jit_.*")
+        .whitelist_function("lgsys_.*")
+        .whitelist_var("lgsys_.*")
         .rustfmt_bindings(true)
         .clang_arg(format!("-I{}", incdir.to_str().unwrap()))
         .generate()
