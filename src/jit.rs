@@ -1,24 +1,30 @@
 use std::os::raw;
 use std::ptr;
-use std::sync::atomic;
+use std::sync::Mutex;
 
 use crate::bindings;
 use crate::JitState;
 
+
 #[derive(Debug)]
 pub struct Jit;
 
-static JIT_MADE: atomic::AtomicBool = atomic::AtomicBool::new(false);
+lazy_static! {
+    static ref JITS_MADE: Mutex<usize> = Mutex::new(0);
+}
 
 impl Jit {
     pub fn new() -> Jit {
-        if JIT_MADE.swap(true, atomic::Ordering::Relaxed) {
-            panic!("there is already an instance of Jit created");
+        let mut m = JITS_MADE.lock().unwrap();
+
+        if *m == 0 {
+            unsafe {
+                //TODO: figure out how to get ptr to argv[0]
+                bindings::init_jit(ptr::null::<raw::c_char>());
+            }
         }
-        unsafe {
-            //TODO: figure out how to get ptr to argv[0]
-            bindings::init_jit(ptr::null::<raw::c_char>());
-        }
+
+        *m += 1;
         Jit{}
     }
 
@@ -53,10 +59,14 @@ impl Jit {
 
 impl Drop for Jit {
     fn drop(&mut self) {
-        unsafe {
-            bindings::finish_jit();
+        let mut m = JITS_MADE.lock().unwrap();
+        *m -= 1;
+
+        if *m == 0 {
+            unsafe {
+                bindings::finish_jit();
+            }
         }
-        JIT_MADE.store(false, atomic::Ordering::Relaxed);
     }
 }
 
@@ -70,12 +80,12 @@ mod tests {
     fn test_jit() {
         {
             let _jit = Jit::new();
-            assert!(std::panic::catch_unwind(|| Jit::new()).is_err());
+            Jit::new();
         }
 
         {
             let _jit = Jit::new();
-            assert!(std::panic::catch_unwind(|| Jit::new()).is_err());
+            Jit::new();
         }
 
     }

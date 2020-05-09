@@ -11,7 +11,7 @@ matrix:
     - rust: nightly
 
 script:
-  - cargo test --verbose -- --test-threads=1
+  - cargo test --verbose
 
 notifications:
   email: false
