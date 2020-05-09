@@ -159,7 +159,3 @@ fn main() {
     println!("factorial({}) = {}", 5, factorial(5));
 }
 ```
-
-## known issues:
-
-- tests must be run like `cargo test -- --test-threads=1`
