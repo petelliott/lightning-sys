@@ -55,7 +55,7 @@ fn main() {
 
     println!("cargo:rustc-link-search=native={}", libdir.to_str().unwrap());
 
-    println!("cargo:rustc-link-lib=dylib=lightning");
+    println!("cargo:rustc-link-lib=static=lightning");
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
