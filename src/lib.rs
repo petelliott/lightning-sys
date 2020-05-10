@@ -168,7 +168,6 @@ mod bindings;
 
 #[macro_use]
 extern crate mashup;
-extern crate num_traits;
 
 #[macro_use]
 extern crate lazy_static;
