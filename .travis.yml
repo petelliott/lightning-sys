@@ -1,5 +1,7 @@
 language: rust
 
+os: linux
+
 dist: bionic
 
 arch:
@@ -18,6 +20,8 @@ jobs:
       arch: s390x
     - rust: stable
       arch: ppc64le
+    - rust: stable
+      os: osx
 
   allow_failures:
     - rust: nightly
