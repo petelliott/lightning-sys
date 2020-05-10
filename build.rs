@@ -14,12 +14,17 @@ fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
     let release = include_str!("release");
     let target = format!("http://ftp.gnu.org/gnu/lightning/{}.tar.gz", release);
     unpack(reqwest::blocking::get(&target)?, prefix)?;
-    Command::new("./build-lightning.sh")
-        .arg(prefix)
-        .arg(release)
-        .output()?;
 
-    Ok(())
+    let run =
+        Command::new("./build-lightning.sh")
+            .arg(prefix)
+            .arg(release)
+            .status();
+
+    match run {
+        Ok(x) if x.success() => Ok(()),
+        _ => Err(format!("failed to build {}", release).into()),
+    }
 }
 
 fn lightning_built(prefix: &Path) -> bool {
