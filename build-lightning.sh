@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
-
-RELEASE=$(cat release)
-
-wget "https://ftp.gnu.org/gnu/lightning/$RELEASE.tar.gz" -O $OUT_DIR/$RELEASE.tar.gz
-tar xvf $OUT_DIR/$RELEASE.tar.gz -C $OUT_DIR/
+set -euo pipefail # fail loud and early
 
 PREFIX=$1
+RELEASE=$2
 (
-    cd $OUT_DIR/$RELEASE
+    cd $PREFIX/$RELEASE
     ./configure --prefix=$PREFIX --disable-disassembler
     make -j4
     make install

@@ -1,17 +1,37 @@
 extern crate bindgen;
+extern crate flate2;
+extern crate reqwest;
+extern crate tar;
 
+use flate2::read::GzDecoder;
 use std::env;
+use std::io::Read;
 use std::path::{PathBuf, Path};
 use std::process::Command;
+use tar::Archive;
 
-fn build_lightning(prefix: &str) {
+fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let release = include_str!("release");
+    let target = format!("http://ftp.gnu.org/gnu/lightning/{}.tar.gz", release);
+    unpack(reqwest::blocking::get(&target)?, prefix)?;
     Command::new("./build-lightning.sh")
         .arg(prefix)
-        .output().unwrap();
+        .arg(release)
+        .output()?;
+
+    Ok(())
 }
 
 fn lightning_built(prefix: &Path) -> bool {
     prefix.exists()
+}
+
+fn unpack<P: AsRef<Path>>(tgz: impl Read, outdir: P) -> Result<(), std::io::Error> {
+    let tar = GzDecoder::new(tgz);
+    let mut archive = Archive::new(tar);
+    archive.unpack(outdir)?;
+
+    Ok(())
 }
 
 fn main() {
@@ -21,7 +41,7 @@ fn main() {
     let incdir = prefix.join("include");
 
     if !lightning_built(&prefix) {
-        build_lightning(prefix.to_str().unwrap());
+        build_lightning(prefix.to_str().unwrap()).unwrap();
     }
     cc::Build::new()
         .include(incdir.clone())

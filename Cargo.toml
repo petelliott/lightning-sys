@@ -16,6 +16,9 @@ lazy_static = "1.4.0"
 [build-dependencies]
 bindgen = "0.53"
 cc = "1.0"
+flate2 = "1.0"
+reqwest = { version = "0.10", default-features = false, features = [ "blocking" ] }
+tar = "0.4"
 
 [dev-dependencies]
 libc = "0.2"
