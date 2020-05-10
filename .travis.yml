@@ -4,17 +4,21 @@ dist: bionic
 
 arch:
   - amd64
-  - arm64
-  - s390x
-  - ppc64le
 
 rust:
   - nightly
   - beta
   - stable
-  - 1.36.0
 
-matrix:
+jobs:
+  include:
+    - rust: stable
+      arch: arm64
+    - rust: stable
+      arch: s390x
+    - rust: stable
+      arch: ppc64le
+
   allow_failures:
     - rust: nightly
 
