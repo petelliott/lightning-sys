@@ -2,6 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/lightning-sys.svg)](https://crates.io/crates/lightning-sys)
 [![docs.rs](https://docs.rs/lightning-sys/badge.svg)](https://docs.rs/lightning-sys/)
+[![Build Status](https://travis-ci.com/Petelliott/lightning-sys.svg?branch=master)](https://travis-ci.com/Petelliott/lightning-sys)
 
 Safe gnu lightning bindings for rust
 
@@ -93,7 +94,7 @@ fn main() {
                 js.pushargr(Reg::V(2));
     let call2 = js.finishi(NULL);
                 js.patch_at(&call2, &label);
-                js.retval(Reg::R(1));
+                js.retval(Reg::R(0));
                 js.addr(Reg::R(0), Reg::R(0), Reg::V(1));
 
                 js.patch(&refr);
