@@ -28,7 +28,7 @@ impl Jit {
         Jit{}
     }
 
-    pub fn new_state<'a>(&'a self) -> JitState<'a> {
+    pub fn new_state(&self) -> JitState {
         JitState {
             state: unsafe {
                 bindings::jit_new_state()

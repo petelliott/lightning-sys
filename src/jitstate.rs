@@ -178,6 +178,7 @@ macro_rules! jit_alias {
 }
 
 /// `JitState` utility methods
+#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     pub fn clear(&self) {
         unsafe {
@@ -216,6 +217,7 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of general instructions
+#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_impl!(live, w);
     jit_impl!(align, w);
@@ -535,6 +537,7 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of 32-bit float instructions
+#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_reexport!(arg_f; -> JitNode);
     jit_reexport!(getarg_f, reg: Reg, arg: &JitNode);
@@ -641,6 +644,7 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of 64-bit float instructions
+#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_reexport!(arg_d; -> JitNode);
     jit_reexport!(getarg_d, reg: Reg, arg: &JitNode);

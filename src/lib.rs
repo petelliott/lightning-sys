@@ -159,6 +159,9 @@
 //!     assert_eq!(120, factorial(5));
 //! }
 //! ```
+// Enforce some lints for the whole crate.
+#![deny(clippy::needless_lifetimes)]
+
 // Suppress some lints for bindings specifically.
 #[allow(non_upper_case_globals)]
 #[allow(non_camel_case_types)]
