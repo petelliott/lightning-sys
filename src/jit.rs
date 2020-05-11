@@ -190,7 +190,7 @@ mod tests {
         assert_eq!(0, fib(0));
         assert_eq!(1, fib(1));
         assert_eq!(1, fib(2));
-        assert_eq!(2178309, fib(32));
+        assert_eq!(2_178_309, fib(32));
     }
 
     #[test]
