@@ -150,6 +150,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::print_literal)]
     fn test_fibonacci() {
         use crate::{Jit, JitWord, Reg, NULL};
 
@@ -194,6 +195,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::print_literal)]
     fn test_factorial() {
         use crate::{Jit, JitWord, Reg, NULL};
 

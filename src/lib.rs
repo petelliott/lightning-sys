@@ -159,6 +159,7 @@
 //!     assert_eq!(120, factorial(5));
 //! }
 //! ```
+// Suppress some lints for bindings specifically.
 #[allow(non_upper_case_globals)]
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
@@ -167,6 +168,7 @@
 #[allow(clippy::unreadable_literal)]
 #[allow(clippy::trivially_copy_pass_by_ref)]
 #[allow(clippy::useless_transmute)]
+#[allow(clippy::too_many_arguments)]
 mod bindings;
 
 #[macro_use]
