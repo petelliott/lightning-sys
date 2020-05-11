@@ -162,6 +162,7 @@
 // Enforce some lints for the whole crate.
 #![deny(clippy::needless_lifetimes)]
 #![deny(clippy::transmute_ptr_to_ptr)]
+#![allow(clippy::needless_doctest_main)] // remain faithful to original examples
 
 // Suppress some lints for bindings specifically.
 #[allow(non_upper_case_globals)]
