@@ -1,3 +1,5 @@
+#![allow(clippy::mutex_atomic)] // Avoid clippy warning about JITS_MADE
+
 use std::os::raw;
 use std::ptr;
 use std::sync::Mutex;
