@@ -189,9 +189,7 @@ impl<'a> JitState<'a> {
     // there is no way to require a function type in a trait bound
     // without specifying the number of arguments
     pub unsafe fn emit<T: Copy>(&self) -> T {
-        *std::mem::transmute::<&JitPointer, &T>(
-            &bindings::_jit_emit(self.state)
-        )
+        *(&bindings::_jit_emit(self.state) as *const *mut core::ffi::c_void as *const T)
     }
 
     pub fn raw_emit(&self) -> JitPointer {
