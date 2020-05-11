@@ -1,4 +1,5 @@
 #![allow(clippy::mutex_atomic)] // Avoid clippy warning about JITS_MADE
+#![allow(clippy::new_without_default)] // Avoid clippy warning about Jit::new
 
 use std::os::raw;
 use std::ptr;
