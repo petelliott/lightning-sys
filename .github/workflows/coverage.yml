@@ -1,0 +1,17 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  coverage:
+    runs-on: [ ubuntu-latest ]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run cargo-tarpaulin
+      uses: actions-rs/tarpaulin@v0.1.0
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
