@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_fibonacci() {
-        use crate::{Jit, JitWord, Reg, JitPointer, NULL};
+        use crate::{Jit, JitWord, Reg, NULL};
 
         let jit = Jit::new();
         let js = jit.new_state();
