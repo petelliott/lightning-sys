@@ -1,3 +1,6 @@
+#![allow(clippy::mutex_atomic)] // Avoid clippy warning about JITS_MADE
+#![allow(clippy::new_without_default)] // Avoid clippy warning about Jit::new
+
 use std::os::raw;
 use std::ptr;
 use std::sync::Mutex;
@@ -28,7 +31,7 @@ impl Jit {
         Jit{}
     }
 
-    pub fn new_state<'a>(&'a self) -> JitState<'a> {
+    pub fn new_state(&self) -> JitState {
         JitState {
             state: unsafe {
                 bindings::jit_new_state()
@@ -150,8 +153,9 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::print_literal)]
     fn test_fibonacci() {
-        use crate::{Jit, JitWord, Reg, JitPointer, NULL};
+        use crate::{Jit, JitWord, Reg, NULL};
 
         let jit = Jit::new();
         let js = jit.new_state();
@@ -190,10 +194,11 @@ mod tests {
         assert_eq!(0, fib(0));
         assert_eq!(1, fib(1));
         assert_eq!(1, fib(2));
-        assert_eq!(2178309, fib(32));
+        assert_eq!(2_178_309, fib(32));
     }
 
     #[test]
+    #[allow(clippy::print_literal)]
     fn test_factorial() {
         use crate::{Jit, JitWord, Reg, NULL};
 
