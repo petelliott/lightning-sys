@@ -69,18 +69,6 @@ macro_rules! jit_impl {
     ( $op:ident, i_qww ) => { jit_impl_inner!($op, qww, a: Reg => i32, b: Reg => i32, c: Reg => JitWord, d: JitWord => _); };
 }
 
-macro_rules! jit_new_node {
-    ( _ ) => { bindings::_jit_new_node };
-    ( $form:ident ) => {{
-        mashup! {
-            m["method"] = _jit_new_node_ $form;
-        }
-        m! {
-            bindings::"method"
-        }
-    }};
-}
-
 macro_rules! jit_code {
     ( $form:ident ) => {{
         mashup! {
@@ -100,10 +88,12 @@ macro_rules! jit_impl_type {
 
 macro_rules! jit_impl_inner {
     ( $op:ident, $ifmt:ident $(, $arg:ident: $type:ty => $target:ty)* ) => {
-        pub fn $op<'b>(&'b self $(, $arg: $type)*) -> JitNode<'b> {
-            JitNode{
-                node: unsafe { jit_new_node!($ifmt)(self.state, jit_code!($op) $(, jit_impl_type!($arg.to_ffi() => $target))*) },
-                phantom: std::marker::PhantomData,
+        paste::item! {
+            pub fn $op<'b>(&'b self $(, $arg: $type)*) -> JitNode<'b> {
+                JitNode{
+                    node: unsafe { bindings::[< _jit_new_node_ $ifmt >](self.state, jit_code!($op) $(, jit_impl_type!($arg.to_ffi() => $target))*) },
+                    phantom: std::marker::PhantomData,
+                }
             }
         }
     };
@@ -156,7 +146,7 @@ macro_rules! jit_branch {
     ( $fn:ident, $t:ident ) => {
         pub fn $fn<'b>(&'b self, a: Reg, b: jit_imm!($t)) -> JitNode<'b> {
             JitNode{
-                node: unsafe{ jit_new_node!(pww)(self.state, jit_code!($fn), null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
+                node: unsafe{ bindings::_jit_new_node_pww(self.state, jit_code!($fn), null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
                 phantom: std::marker::PhantomData,
             }
         }
@@ -499,7 +489,7 @@ impl<'a> JitState<'a> {
     pub fn jmpi<'b>(&'b self) -> JitNode<'b> {
         // I looked at the lightning code, this will be copied
         JitNode{
-            node: unsafe { jit_new_node!(p)(self.state, jit_code!(jmpi), std::ptr::null_mut::<c_void >()) },
+            node: unsafe { bindings::_jit_new_node_p(self.state, jit_code!(jmpi), std::ptr::null_mut::<c_void >()) },
             phantom: std::marker::PhantomData,
         }
     }
