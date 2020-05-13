@@ -89,7 +89,7 @@ macro_rules! jit_impl_inner {
         paste::item! {
             pub fn $op(&mut self $(, $arg: $type)*) -> JitNode<'a> {
                 JitNode{
-                    node: unsafe { bindings::[< _jit_new_node_ $ifmt >](self.state, bindings::[< jit_code_t_jit_code_ $op >] $(, jit_impl_type!($arg.to_ffi() => $target))*) },
+                    node: unsafe { bindings::[< _jit_new_node_ $ifmt >](self.state, bindings::jit_code_t::[< jit_code_ $op >] $(, jit_impl_type!($arg.to_ffi() => $target))*) },
                     phantom: std::marker::PhantomData,
                 }
             }
@@ -140,7 +140,7 @@ macro_rules! jit_branch {
         paste::item! {
             pub fn $fn(&mut self, a: Reg, b: jit_imm!($t)) -> JitNode<'a> {
                 JitNode{
-                    node: unsafe{ bindings::_jit_new_node_pww(self.state, bindings::[< jit_code_t_jit_code_ $fn >], null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
+                    node: unsafe{ bindings::_jit_new_node_pww(self.state, bindings::jit_code_t::[< jit_code_ $fn >], null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
                     phantom: std::marker::PhantomData,
                 }
             }
@@ -499,7 +499,7 @@ impl<'a> JitState<'a> {
     pub fn jmpi(&mut self) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         JitNode{
-            node: unsafe { bindings::_jit_new_node_p(self.state, bindings::jit_code_t_jit_code_jmpi, std::ptr::null_mut::<c_void >()) },
+            node: unsafe { bindings::_jit_new_node_p(self.state, bindings::jit_code_t::jit_code_jmpi, std::ptr::null_mut::<c_void >()) },
             phantom: std::marker::PhantomData,
         }
     }

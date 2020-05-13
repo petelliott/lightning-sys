@@ -78,6 +78,7 @@ fn main() {
         .whitelist_var("_?jit_.*")
         .whitelist_function("lgsys_.*")
         .whitelist_var("lgsys_.*")
+        .rustified_non_exhaustive_enum("jit_code_t")
         .rustfmt_bindings(true)
         .clang_arg(format!("-I{}", incdir.to_str().unwrap()))
         .generate()
