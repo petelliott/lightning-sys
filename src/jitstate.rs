@@ -90,34 +90,29 @@ macro_rules! jit_impl_inner {
     };
 }
 
-macro_rules! jit_prefix {
-    ( $form:ident ) => {{
-        mashup! {
-            m["method"] = _jit_ $form;
-        }
-        m! {
-            bindings::"method"
-        }
-    }}
-}
-
 macro_rules! jit_reexport {
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
-        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
-            JitNode{
-                node: unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) },
-                phantom: std::marker::PhantomData,
+        paste::item! {
+            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
+                JitNode{
+                    node: unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) },
+                    phantom: std::marker::PhantomData,
+                }
             }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> bool) => {
-        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> bool {
-            unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) != 0 }
+        paste::item! {
+            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> bool {
+                unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) != 0 }
+            }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
-        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> $ret {
-            unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) }
+        paste::item! {
+            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> $ret {
+                unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) }
+            }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*) => { jit_reexport!($fn $(, $arg : $typ)*; -> ()); }
