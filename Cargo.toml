@@ -10,7 +10,7 @@ repository = "https://github.com/petelliott/lightning-sys"
 documentation = "https://docs.rs/lightning-sys"
 
 [dependencies]
-mashup = "0.1"
+paste = "0.1"
 lazy_static = "1.4.0"
 
 [build-dependencies]

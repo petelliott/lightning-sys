@@ -69,30 +69,6 @@ macro_rules! jit_impl {
     ( $op:ident, i_qww ) => { jit_impl_inner!($op, qww, a: Reg => i32, b: Reg => i32, c: Reg => JitWord, d: JitWord => _); };
 }
 
-macro_rules! jit_new_node {
-    ( _ ) => { bindings::_jit_new_node };
-    ( $form:ident ) => {{
-        mashup! {
-            m["method"] = _jit_new_node_ $form;
-        }
-        m! {
-            bindings::"method"
-        }
-    }};
-}
-
-macro_rules! jit_code {
-    ( $form:ident ) => {{
-        mashup! {
-            m["code"] = jit_code_t_jit_code_ $form;
-        }
-        m! {
-            bindings::"code"
-        }
-    }};
-}
-
-
 macro_rules! jit_impl_type {
     ( $e:expr => _ ) => { $e };
     ( $e:expr => $t:ty ) => { $e as $t };
@@ -100,10 +76,12 @@ macro_rules! jit_impl_type {
 
 macro_rules! jit_impl_inner {
     ( $op:ident, $ifmt:ident $(, $arg:ident: $type:ty => $target:ty)* ) => {
-        pub fn $op<'b>(&'b self $(, $arg: $type)*) -> JitNode<'b> {
-            JitNode{
-                node: unsafe { jit_new_node!($ifmt)(self.state, jit_code!($op) $(, jit_impl_type!($arg.to_ffi() => $target))*) },
-                phantom: std::marker::PhantomData,
+        paste::item! {
+            pub fn $op<'b>(&'b self $(, $arg: $type)*) -> JitNode<'b> {
+                JitNode{
+                    node: unsafe { bindings::[< _jit_new_node_ $ifmt >](self.state, bindings::[< jit_code_t_jit_code_ $op >] $(, jit_impl_type!($arg.to_ffi() => $target))*) },
+                    phantom: std::marker::PhantomData,
+                }
             }
         }
     };
@@ -112,34 +90,29 @@ macro_rules! jit_impl_inner {
     };
 }
 
-macro_rules! jit_prefix {
-    ( $form:ident ) => {{
-        mashup! {
-            m["method"] = _jit_ $form;
-        }
-        m! {
-            bindings::"method"
-        }
-    }}
-}
-
 macro_rules! jit_reexport {
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
-        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
-            JitNode{
-                node: unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) },
-                phantom: std::marker::PhantomData,
+        paste::item! {
+            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
+                JitNode{
+                    node: unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) },
+                    phantom: std::marker::PhantomData,
+                }
             }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> bool) => {
-        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> bool {
-            unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) != 0 }
+        paste::item! {
+            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> bool {
+                unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) != 0 }
+            }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
-        pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> $ret {
-            unsafe { jit_prefix!($fn)(self.state $(, $arg.to_ffi())*) }
+        paste::item! {
+            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> $ret {
+                unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) }
+            }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*) => { jit_reexport!($fn $(, $arg : $typ)*; -> ()); }
@@ -154,10 +127,12 @@ macro_rules! jit_imm {
 
 macro_rules! jit_branch {
     ( $fn:ident, $t:ident ) => {
-        pub fn $fn<'b>(&'b self, a: Reg, b: jit_imm!($t)) -> JitNode<'b> {
-            JitNode{
-                node: unsafe{ jit_new_node!(pww)(self.state, jit_code!($fn), null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
-                phantom: std::marker::PhantomData,
+        paste::item! {
+            pub fn $fn<'b>(&'b self, a: Reg, b: jit_imm!($t)) -> JitNode<'b> {
+                JitNode{
+                    node: unsafe{ bindings::_jit_new_node_pww(self.state, bindings::[< jit_code_t_jit_code_ $fn >], null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
+                    phantom: std::marker::PhantomData,
+                }
             }
         }
     };
@@ -499,7 +474,7 @@ impl<'a> JitState<'a> {
     pub fn jmpi<'b>(&'b self) -> JitNode<'b> {
         // I looked at the lightning code, this will be copied
         JitNode{
-            node: unsafe { jit_new_node!(p)(self.state, jit_code!(jmpi), std::ptr::null_mut::<c_void >()) },
+            node: unsafe { bindings::_jit_new_node_p(self.state, bindings::jit_code_t_jit_code_jmpi, std::ptr::null_mut::<c_void >()) },
             phantom: std::marker::PhantomData,
         }
     }

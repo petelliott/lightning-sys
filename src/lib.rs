@@ -175,9 +175,6 @@
 mod bindings;
 
 #[macro_use]
-extern crate mashup;
-
-#[macro_use]
 extern crate lazy_static;
 
 pub mod jit;
