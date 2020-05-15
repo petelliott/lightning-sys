@@ -42,19 +42,19 @@ impl Jit {
 
     pub fn r_num(&self) -> bindings::jit_gpr_t {
         unsafe {
-            bindings::lgsys_JIT_R_NUM
+            bindings::lgsys_JIT_R_NUM()
         }
     }
 
     pub fn v_num(&self) -> bindings::jit_gpr_t {
         unsafe {
-            bindings::lgsys_JIT_V_NUM
+            bindings::lgsys_JIT_V_NUM()
         }
     }
 
     pub fn f_num(&self) -> bindings::jit_gpr_t {
         unsafe {
-            bindings::lgsys_JIT_F_NUM
+            bindings::lgsys_JIT_F_NUM()
         }
     }
 

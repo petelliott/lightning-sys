@@ -5,8 +5,8 @@ int lgsys_jit_r(int n);
 int lgsys_jit_v(int n);
 int lgsys_jit_f(int n);
 
-extern const int lgsys_JIT_R_NUM;
-extern const int lgsys_JIT_V_NUM;
-extern const int lgsys_JIT_F_NUM;
+int lgsys_JIT_R_NUM(void);
+int lgsys_JIT_V_NUM(void);
+int lgsys_JIT_F_NUM(void);
 
 #endif
