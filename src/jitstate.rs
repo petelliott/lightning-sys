@@ -366,7 +366,7 @@ impl<'a> JitState<'a> {
     #[cfg(target_pointer_width = "32")]
     jit_alias!(ldr_i => ldr, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "32")]
-    jit_alias!(ldi_i => ldr, targ: Reg, src: JitPointer; -> JitNode);
+    jit_alias!(ldi_i => ldi, targ: Reg, src: JitPointer; -> JitNode);
     #[cfg(target_pointer_width = "64")]
     jit_alias!(ldr_l => ldr, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "64")]
