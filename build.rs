@@ -28,7 +28,10 @@ fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn lightning_built(prefix: &Path) -> bool {
-    prefix.exists()
+    // Since a cross-platform name for the actual library file is hard to
+    // compute, just look for the "lib" directory, which implies that the
+    // `install` target succeeded.
+    prefix.join("lib").exists()
 }
 
 fn unpack<P: AsRef<Path>>(tgz: impl Read, outdir: P) -> Result<(), std::io::Error> {
