@@ -231,6 +231,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(getarg_s, reg: Reg, node: &JitNode);
     jit_reexport!(getarg_us, reg: Reg, node: &JitNode);
     jit_reexport!(getarg_i, reg: Reg, node: &JitNode);
+    #[cfg(target_pointer_width = "64")]
     jit_reexport!(getarg_ui, reg: Reg, node: &JitNode);
     #[cfg(target_pointer_width = "64")]
     jit_reexport!(getarg_l, reg: Reg, node: &JitNode);
