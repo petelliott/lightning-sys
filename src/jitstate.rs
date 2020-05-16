@@ -77,7 +77,7 @@ macro_rules! jit_impl_type {
 macro_rules! jit_impl_inner {
     ( $op:ident, $ifmt:ident $(, $arg:ident: $type:ty => $target:ty)* ) => {
         paste::item! {
-            pub fn $op<'b>(&'b self $(, $arg: $type)*) -> JitNode<'b> {
+            pub fn $op(&self $(, $arg: $type)*) -> JitNode<'a> {
                 JitNode{
                     node: unsafe { bindings::[< _jit_new_node_ $ifmt >](self.state, bindings::[< jit_code_t_jit_code_ $op >] $(, jit_impl_type!($arg.to_ffi() => $target))*) },
                     phantom: std::marker::PhantomData,
@@ -93,7 +93,7 @@ macro_rules! jit_impl_inner {
 macro_rules! jit_reexport {
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
         paste::item! {
-            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
+            pub fn $fn(&self $(, $arg: $typ )*) -> JitNode<'a> {
                 JitNode{
                     node: unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) },
                     phantom: std::marker::PhantomData,
@@ -103,14 +103,14 @@ macro_rules! jit_reexport {
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> bool) => {
         paste::item! {
-            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> bool {
+            pub fn $fn(&self $(, $arg: $typ )*) -> bool {
                 unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) != 0 }
             }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
         paste::item! {
-            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> $ret {
+            pub fn $fn(&self $(, $arg: $typ )*) -> $ret {
                 unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) }
             }
         }
@@ -128,7 +128,7 @@ macro_rules! jit_imm {
 macro_rules! jit_branch {
     ( $fn:ident, $t:ident ) => {
         paste::item! {
-            pub fn $fn<'b>(&'b self, a: Reg, b: jit_imm!($t)) -> JitNode<'b> {
+            pub fn $fn(&self, a: Reg, b: jit_imm!($t)) -> JitNode<'a> {
                 JitNode{
                     node: unsafe{ bindings::_jit_new_node_pww(self.state, bindings::[< jit_code_t_jit_code_ $fn >], null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
                     phantom: std::marker::PhantomData,
@@ -140,12 +140,12 @@ macro_rules! jit_branch {
 
 macro_rules! jit_alias {
     ( $targ:ident => $new:ident $(, $arg:ident : $typ:ty )*; -> JitNode ) => {
-        pub fn $new<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
+        pub fn $new(&self $(, $arg: $typ )*) -> JitNode<'a> {
             self.$targ($( $arg ),*)
         }
     };
     ( $targ:ident => $new:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
-        pub fn $new<'b>(&'b self $(, $arg: $typ )*) -> $ret {
+        pub fn $new(&self $(, $arg: $typ )*) -> $ret {
             self.$targ($( $arg ),*)
         }
     };
@@ -153,7 +153,6 @@ macro_rules! jit_alias {
 }
 
 /// `JitState` utility methods
-#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     pub fn clear(&self) {
         unsafe {
@@ -190,12 +189,11 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of general instructions
-#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_impl!(live, w);
     jit_impl!(align, w);
 
-    pub fn name<'b>(&'b self, name: &str) -> JitNode<'b> {
+    pub fn name(&self, name: &str) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         let cs = CString::new(name).unwrap();
         JitNode{
@@ -204,7 +202,7 @@ impl<'a> JitState<'a> {
         }
     }
 
-    pub fn note<'b>(&'b self, file: Option<&str>, line: u32) -> JitNode<'b> {
+    pub fn note(&self, file: Option<&str>, line: u32) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         let cs = file
             .map(CString::new)
@@ -476,7 +474,7 @@ impl<'a> JitState<'a> {
 
     jit_impl!(jmpr, w);
 
-    pub fn jmpi<'b>(&'b self) -> JitNode<'b> {
+    pub fn jmpi(&self) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         JitNode{
             node: unsafe { bindings::_jit_new_node_p(self.state, bindings::jit_code_t_jit_code_jmpi, std::ptr::null_mut::<c_void >()) },
@@ -515,7 +513,6 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of 32-bit float instructions
-#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_reexport!(arg_f; -> JitNode);
     jit_reexport!(getarg_f, reg: Reg, arg: &JitNode);
@@ -622,7 +619,6 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of 64-bit float instructions
-#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_reexport!(arg_d; -> JitNode);
     jit_reexport!(getarg_d, reg: Reg, arg: &JitNode);
