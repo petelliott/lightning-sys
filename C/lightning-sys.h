@@ -9,4 +9,5 @@ int lgsys_JIT_R_NUM(void);
 int lgsys_JIT_V_NUM(void);
 int lgsys_JIT_F_NUM(void);
 
+extern const int lgsys_JIT_FP;
 #endif

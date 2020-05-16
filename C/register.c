@@ -24,3 +24,5 @@ int lgsys_JIT_V_NUM(void) {
 int lgsys_JIT_F_NUM(void) {
     return JIT_F_NUM;
 }
+
+const int lgsys_JIT_FP = JIT_FP;
