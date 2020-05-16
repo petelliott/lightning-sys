@@ -204,11 +204,15 @@ impl<'a> JitState<'a> {
         }
     }
 
-    pub fn note<'b>(&'b self, file: &str, line: u32) -> JitNode<'b> {
+    pub fn note<'b>(&'b self, file: Option<&str>, line: u32) -> JitNode<'b> {
         // I looked at the lightning code, this will be copied
-        let cs = CString::new(file).unwrap();
+        let cs = file
+            .map(CString::new)
+            .map(Result::unwrap)
+            .map(|c| c.as_ptr())
+            .unwrap_or(core::ptr::null());
         JitNode{
-            node: unsafe { bindings::_jit_note(self.state, cs.as_ptr(), line as i32) },
+            node: unsafe { bindings::_jit_note(self.state, cs, line as i32) },
             phantom: std::marker::PhantomData,
         }
     }
