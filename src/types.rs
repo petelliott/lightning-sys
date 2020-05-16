@@ -31,19 +31,19 @@ impl ToFFI for Reg {
     //TODO: safe conversion
     fn to_ffi(&self) -> Self::Type {
         match self {
-            Reg::R(i) => if *i < unsafe { bindings::lgsys_JIT_R_NUM } {
+            Reg::R(i) => if *i < unsafe { bindings::lgsys_JIT_R_NUM() } {
                 unsafe { bindings::lgsys_jit_r(*i) }
             } else {
                 panic!("register 'R{}' is not supported", *i);
             },
 
-            Reg::V(i) => if *i < unsafe { bindings::lgsys_JIT_V_NUM } {
+            Reg::V(i) => if *i < unsafe { bindings::lgsys_JIT_V_NUM() } {
                 unsafe { bindings::lgsys_jit_v(*i) }
             } else {
                 panic!("register 'V{}' is not supported", i);
             },
 
-            Reg::F(i) => if *i < unsafe { bindings::lgsys_JIT_F_NUM } {
+            Reg::F(i) => if *i < unsafe { bindings::lgsys_JIT_F_NUM() } {
                 unsafe { bindings::lgsys_jit_f(*i) }
             } else {
                 panic!("register 'F{}' is not supported", i);

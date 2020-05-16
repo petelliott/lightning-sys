@@ -22,9 +22,21 @@ jobs:
       arch: ppc64le
     - rust: stable
       os: osx
+    - rust: stable
+      arch: amd64
+      env: CARGO_BUILD_TARGET=i686-unknown-linux-gnu
+      addons:
+        apt:
+          packages:
+            - libc6-i386
+            - lib32gcc1
+            - gcc-multilib
 
   allow_failures:
     - rust: nightly
+
+install:
+  - ./scripts/rustup-extras.sh
 
 script:
   - cargo test --verbose

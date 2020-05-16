@@ -15,8 +15,15 @@ fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
     let target = format!("http://ftp.gnu.org/gnu/lightning/{}.tar.gz", release);
     unpack(reqwest::blocking::get(&target)?, prefix)?;
 
+    let cflags = cc::Build::new().get_compiler().cflags_env();
+    let flags = vec![
+            ("CFLAGS", cflags.clone()),
+            ("LDFLAGS", cflags.clone()),
+        ];
+
     let run =
         Command::new("./build-lightning.sh")
+            .envs(flags)
             .arg(prefix)
             .arg(release)
             .status();
@@ -28,7 +35,10 @@ fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn lightning_built(prefix: &Path) -> bool {
-    prefix.exists()
+    // Since a cross-platform name for the actual library file is hard to
+    // compute, just look for the "lib" directory, which implies that the
+    // `install` target succeeded.
+    prefix.join("lib").exists()
 }
 
 fn unpack<P: AsRef<Path>>(tgz: impl Read, outdir: P) -> Result<(), std::io::Error> {
