@@ -69,6 +69,17 @@ macro_rules! jit_impl {
     ( $op:ident, i_qww ) => { jit_impl_inner!($op, qww, a: Reg => i32, b: Reg => i32, c: Reg => JitWord, d: JitWord => _); };
 }
 
+macro_rules! jit_store {
+    ( $op:ident, ww ) => { jit_impl_inner!($op, ww, a: Reg => JitWord, b: Reg => JitWord); };
+
+    ( $op:ident, i_pw ) => { jit_impl_inner!($op, pw, a: JitPointer => _, b: Reg => JitWord); };
+
+    ( $op:ident, www ) => { jit_impl_inner!($op, www, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
+
+    ( $op:ident, i_www ) => { jit_impl_inner!($op, www, a: JitWord => _, b: Reg => JitWord, c: Reg => JitWord); };
+
+}
+
 macro_rules! jit_impl_type {
     ( $e:expr => _ ) => { $e };
     ( $e:expr => $t:ty ) => { $e as $t };
@@ -395,16 +406,16 @@ impl<'a> JitState<'a> {
     #[cfg(target_pointer_width = "64")]
     jit_alias!(ldxr_l => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
 
-    jit_impl!(str_c, ww);
-    jit_impl!(sti_c, i_pw);
-    jit_impl!(str_s, ww);
-    jit_impl!(sti_s, i_pw);
-    jit_impl!(str_i, ww);
-    jit_impl!(sti_i, i_pw);
+    jit_store!(str_c, ww);
+    jit_store!(sti_c, i_pw);
+    jit_store!(str_s, ww);
+    jit_store!(sti_s, i_pw);
+    jit_store!(str_i, ww);
+    jit_store!(sti_i, i_pw);
     #[cfg(target_pointer_width = "64")]
-    jit_impl!(str_l, ww);
+    jit_store!(str_l, ww);
     #[cfg(target_pointer_width = "64")]
-    jit_impl!(sti_l, i_pw);
+    jit_store!(sti_l, i_pw);
     #[cfg(target_pointer_width = "32")]
     jit_alias!(str_i => str, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "32")]
@@ -414,24 +425,24 @@ impl<'a> JitState<'a> {
     #[cfg(target_pointer_width = "64")]
     jit_alias!(sti_i => sti, targ: JitPointer, src: Reg; -> JitNode);
 
-    jit_impl!(stxr_c, www);
-    jit_impl!(stxi_c, i_www);
-    jit_impl!(stxr_s, www);
-    jit_impl!(stxi_s, i_www);
-    jit_impl!(stxr_i, www);
-    jit_impl!(stxi_i, i_www);
+    jit_store!(stxr_c, www);
+    jit_store!(stxi_c, i_www);
+    jit_store!(stxr_s, www);
+    jit_store!(stxi_s, i_www);
+    jit_store!(stxr_i, www);
+    jit_store!(stxi_i, i_www);
     #[cfg(target_pointer_width = "64")]
-    jit_impl!(stxr_l, www);
+    jit_store!(stxr_l, www);
     #[cfg(target_pointer_width = "64")]
-    jit_impl!(stxi_l, i_www);
+    jit_store!(stxi_l, i_www);
     #[cfg(target_pointer_width = "32")]
-    jit_alias!(stxr_i => stxr, targ: Reg, src: Reg, off: Reg; -> JitNode);
+    jit_alias!(stxr_i => stxr, off: Reg, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "32")]
-    jit_alias!(stxi_i => stxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
+    jit_alias!(stxi_i => stxi, off: JitWord, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "64")]
-    jit_alias!(stxr_l => stxr, targ: Reg, src: Reg, off: Reg; -> JitNode);
+    jit_alias!(stxr_l => stxr, off: Reg, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "64")]
-    jit_alias!(stxi_l => stxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
+    jit_alias!(stxi_l => stxi, off: JitWord, targ: Reg, src: Reg; -> JitNode);
 
     jit_branch!(bltr, r);
     jit_branch!(blti, i);
@@ -579,10 +590,10 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxr_f, www);
     jit_impl!(ldxi_f, i_www);
 
-    jit_impl!(str_f, ww);
-    jit_impl!(sti_f, i_pw);
-    jit_impl!(stxr_f, www);
-    jit_impl!(stxi_f, i_www);
+    jit_store!(str_f, ww);
+    jit_store!(sti_f, i_pw);
+    jit_store!(stxr_f, www);
+    jit_store!(stxi_f, i_www);
 
     jit_branch!(bltr_f, r);
     jit_branch!(blti_f, f);
@@ -685,10 +696,10 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxr_d, www);
     jit_impl!(ldxi_d, i_www);
 
-    jit_impl!(str_d, ww);
-    jit_impl!(sti_d, i_pw);
-    jit_impl!(stxr_d, www);
-    jit_impl!(stxi_d, i_www);
+    jit_store!(str_d, ww);
+    jit_store!(sti_d, i_pw);
+    jit_store!(stxr_d, www);
+    jit_store!(stxi_d, i_www);
 
     jit_branch!(bltr_d, r);
     jit_branch!(blti_d, d);
