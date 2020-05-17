@@ -13,5 +13,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Run cargo-tarpaulin
       uses: actions-rs/tarpaulin@v0.1.0
+      with:
+        args: '--run-types Tests,Examples'
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
