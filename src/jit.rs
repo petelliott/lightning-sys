@@ -8,9 +8,10 @@ use std::sync::Mutex;
 use crate::bindings;
 use crate::JitState;
 
+use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct Jit<'a>(std::marker::PhantomData<&'a ()>);
+pub struct Jit<'a>(PhantomData<&'a ()>);
 
 lazy_static! {
     static ref JITS_MADE: Mutex<usize> = Mutex::new(0);
@@ -28,7 +29,7 @@ impl<'a> Jit<'a> {
         }
 
         *m += 1;
-        Jit(std::marker::PhantomData)
+        Jit(PhantomData)
     }
 
     pub fn new_state(&self) -> JitState {
@@ -36,7 +37,7 @@ impl<'a> Jit<'a> {
             state: unsafe {
                 bindings::jit_new_state()
             },
-            phantom: std::marker::PhantomData,
+            phantom: PhantomData,
         }
     }
 
