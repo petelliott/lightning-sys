@@ -126,7 +126,7 @@ mod tests {
         use std::convert::TryInto;
 
         let mut jit = Jit::new();
-        let js = jit.new_state();
+        let mut js = jit.new_state();
 
         // make sure this outlives any calls
         let cs = CString::new("generated %d bytes\n").unwrap();
@@ -159,7 +159,7 @@ mod tests {
         use crate::{Jit, JitWord, Reg, NULL};
 
         let mut jit = Jit::new();
-        let js = jit.new_state();
+        let mut js = jit.new_state();
 
         let label = js.label();
                     js.prolog();
@@ -204,7 +204,7 @@ mod tests {
         use crate::{Jit, JitWord, Reg, NULL};
 
         let mut jit = Jit::new();
-        let js = jit.new_state();
+        let mut js = jit.new_state();
 
         let fact = js.forward();
 

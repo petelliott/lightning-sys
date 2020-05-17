@@ -13,7 +13,7 @@ Safe gnu lightning bindings for rust
 use lightning_sys::{Jit, Reg, JitPointer, JitWord};
 
 let jit = Jit::new();
-let js = jit.new_state();
+let mut js = jit.new_state();
 
 js.prolog();
 let inarg = js.arg();
@@ -39,7 +39,7 @@ use std::convert::TryInto;
 
 fn main() {
     let jit = Jit::new();
-    let js = jit.new_state();
+    let mut js = jit.new_state();
 
     // make sure this outlives any calls
     let cs = CString::new("generated %d bytes\n").unwrap();
@@ -73,7 +73,7 @@ use lightning_sys::{Jit, JitWord, Reg, JitPointer, NULL};
 
 fn main() {
     let jit = Jit::new();
-    let js = jit.new_state();
+    let mut js = jit.new_state();
 
     let label = js.label();
                 js.prolog();
@@ -119,7 +119,7 @@ use lightning_sys::{Jit, JitWord, Reg, NULL};
 
 fn main() {
     let jit = Jit::new();
-    let js = jit.new_state();
+    let mut js = jit.new_state();
 
     let fact = js.forward();
 

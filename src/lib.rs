@@ -6,7 +6,7 @@
 //! use lightning_sys::{Jit, Reg, JitPointer, JitWord};
 //!
 //! let mut jit = Jit::new();
-//! let js = jit.new_state();
+//! let mut js = jit.new_state();
 //!
 //! js.prolog();
 //! let inarg = js.arg();
@@ -32,7 +32,7 @@
 //!
 //! fn main() {
 //!     let mut jit = Jit::new();
-//!     let js = jit.new_state();
+//!     let mut js = jit.new_state();
 //!
 //!     // make sure this outlives any calls
 //!     let cs = CString::new("generated %d bytes\n").unwrap();
@@ -67,7 +67,7 @@
 //!
 //! fn main() {
 //!     let mut jit = Jit::new();
-//!     let js = jit.new_state();
+//!     let mut js = jit.new_state();
 //!
 //!     let label = js.label();
 //!                 js.prolog();
@@ -113,7 +113,7 @@
 //!
 //! fn main() {
 //!     let mut jit = Jit::new();
-//!     let js = jit.new_state();
+//!     let mut js = jit.new_state();
 //!
 //!     let fact = js.forward();
 //!
