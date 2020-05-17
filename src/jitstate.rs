@@ -1,5 +1,4 @@
 use crate::bindings;
-use crate::Jit;
 use crate::Reg;
 use crate::JitNode;
 use crate::{JitWord, JitPointer};
@@ -10,7 +9,7 @@ use std::ptr::null_mut;
 #[derive(Debug)]
 pub struct JitState<'a> {
     pub(crate) state: *mut bindings::jit_state_t,
-    pub(crate) jit: &'a Jit,
+    pub(crate) phantom: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> Drop for JitState<'a> {

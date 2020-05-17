@@ -10,14 +10,14 @@ use crate::JitState;
 
 
 #[derive(Debug)]
-pub struct Jit;
+pub struct Jit<'a>(std::marker::PhantomData<&'a ()>);
 
 lazy_static! {
     static ref JITS_MADE: Mutex<usize> = Mutex::new(0);
 }
 
-impl Jit {
-    pub fn new() -> Jit {
+impl<'a> Jit<'a> {
+    pub fn new() -> Jit<'a> {
         let mut m = JITS_MADE.lock().unwrap();
 
         if *m == 0 {
@@ -28,7 +28,7 @@ impl Jit {
         }
 
         *m += 1;
-        Jit{}
+        Jit(std::marker::PhantomData)
     }
 
     pub fn new_state(&self) -> JitState {
@@ -36,7 +36,7 @@ impl Jit {
             state: unsafe {
                 bindings::jit_new_state()
             },
-            jit: &self,
+            phantom: std::marker::PhantomData,
         }
     }
 
@@ -60,7 +60,7 @@ impl Jit {
 
 }
 
-impl Drop for Jit {
+impl<'a> Drop for Jit<'a> {
     fn drop(&mut self) {
         let mut m = JITS_MADE.lock().unwrap();
         *m -= 1;
