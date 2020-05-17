@@ -60,7 +60,7 @@ fn compile_rpn<'a>(js: &mut JitState<'a>, mut expr: &str) -> JitNode<'a> {
     js.retr(Reg::R(0));
     js.epilog();
 
-    return func;
+    func
 }
 
 fn main() {
@@ -86,11 +86,11 @@ fn main() {
     for i in 0..=10 { print!("{:3} ", i * 10); }
     print!("\nF:");
     for i in 0..=10 { print!("{:3} ", c2f(i * 10)); }
-    print!("\n");
+    println!();
 
     print!("\nF:");
     for i in 0..=10 { print!("{:3} ", i * 18 + 32); }
     print!("\nC:");
     for i in 0..=10 { print!("{:3} ", f2c(i * 18 + 32)); }
-    print!("\n");
+    println!();
 }
