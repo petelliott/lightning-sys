@@ -32,7 +32,7 @@ impl<'a> Jit<'a> {
         Jit(PhantomData)
     }
 
-    pub fn new_state(&self) -> JitState {
+    pub fn new_state(&mut self) -> JitState {
         JitState {
             state: unsafe {
                 bindings::jit_new_state()
@@ -125,7 +125,7 @@ mod tests {
         use crate::{Jit, JitWord, Reg, JitPointer};
         use std::convert::TryInto;
 
-        let jit = Jit::new();
+        let mut jit = Jit::new();
         let js = jit.new_state();
 
         // make sure this outlives any calls
@@ -158,7 +158,7 @@ mod tests {
     fn test_fibonacci() {
         use crate::{Jit, JitWord, Reg, NULL};
 
-        let jit = Jit::new();
+        let mut jit = Jit::new();
         let js = jit.new_state();
 
         let label = js.label();
@@ -203,7 +203,7 @@ mod tests {
     fn test_factorial() {
         use crate::{Jit, JitWord, Reg, NULL};
 
-        let jit = Jit::new();
+        let mut jit = Jit::new();
         let js = jit.new_state();
 
         let fact = js.forward();

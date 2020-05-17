@@ -5,7 +5,7 @@
 //! ```
 //! use lightning_sys::{Jit, Reg, JitPointer, JitWord};
 //!
-//! let jit = Jit::new();
+//! let mut jit = Jit::new();
 //! let js = jit.new_state();
 //!
 //! js.prolog();
@@ -31,7 +31,7 @@
 //! use std::convert::TryInto;
 //!
 //! fn main() {
-//!     let jit = Jit::new();
+//!     let mut jit = Jit::new();
 //!     let js = jit.new_state();
 //!
 //!     // make sure this outlives any calls
@@ -66,7 +66,7 @@
 //! use lightning_sys::{Jit, JitWord, Reg, JitPointer, NULL};
 //!
 //! fn main() {
-//!     let jit = Jit::new();
+//!     let mut jit = Jit::new();
 //!     let js = jit.new_state();
 //!
 //!     let label = js.label();
@@ -112,7 +112,7 @@
 //! use lightning_sys::{Jit, JitWord, Reg, NULL};
 //!
 //! fn main() {
-//!     let jit = Jit::new();
+//!     let mut jit = Jit::new();
 //!     let js = jit.new_state();
 //!
 //!     let fact = js.forward();
