@@ -2,6 +2,7 @@ use crate::bindings;
 use std::ptr::null_mut;
 use std::ffi::c_void;
 
+#[derive(Copy,Clone,PartialEq,Eq,Debug)]
 pub enum Reg {
     R(bindings::jit_gpr_t),
     V(bindings::jit_gpr_t),
