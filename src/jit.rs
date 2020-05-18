@@ -8,16 +8,17 @@ use std::sync::Mutex;
 use crate::bindings;
 use crate::JitState;
 
+use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct Jit;
+pub struct Jit<'a>(PhantomData<&'a ()>);
 
 lazy_static! {
     static ref JITS_MADE: Mutex<usize> = Mutex::new(0);
 }
 
-impl Jit {
-    pub fn new() -> Jit {
+impl<'a> Jit<'a> {
+    pub fn new() -> Jit<'a> {
         let mut m = JITS_MADE.lock().unwrap();
 
         if *m == 0 {
@@ -28,15 +29,17 @@ impl Jit {
         }
 
         *m += 1;
-        Jit{}
+        Jit(PhantomData)
     }
 
-    pub fn new_state(&self) -> JitState {
+    // This takes &mut self instead of &self because the unsafe operations wrapped herein are
+    // inherently mutating.
+    pub fn new_state(&mut self) -> JitState {
         JitState {
             state: unsafe {
                 bindings::jit_new_state()
             },
-            jit: &self,
+            phantom: PhantomData,
         }
     }
 
@@ -60,7 +63,7 @@ impl Jit {
 
 }
 
-impl Drop for Jit {
+impl<'a> Drop for Jit<'a> {
     fn drop(&mut self) {
         let mut m = JITS_MADE.lock().unwrap();
         *m -= 1;
@@ -124,8 +127,8 @@ mod tests {
         use crate::{Jit, JitWord, Reg, JitPointer};
         use std::convert::TryInto;
 
-        let jit = Jit::new();
-        let js = jit.new_state();
+        let mut jit = Jit::new();
+        let mut js = jit.new_state();
 
         // make sure this outlives any calls
         let cs = CString::new("generated %d bytes\n").unwrap();
@@ -157,8 +160,8 @@ mod tests {
     fn test_fibonacci() {
         use crate::{Jit, JitWord, Reg, NULL};
 
-        let jit = Jit::new();
-        let js = jit.new_state();
+        let mut jit = Jit::new();
+        let mut js = jit.new_state();
 
         let label = js.label();
                     js.prolog();
@@ -202,8 +205,8 @@ mod tests {
     fn test_factorial() {
         use crate::{Jit, JitWord, Reg, NULL};
 
-        let jit = Jit::new();
-        let js = jit.new_state();
+        let mut jit = Jit::new();
+        let mut js = jit.new_state();
 
         let fact = js.forward();
 

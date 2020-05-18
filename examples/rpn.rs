@@ -64,7 +64,7 @@ fn compile_rpn<'a>(js: &mut JitState<'a>, mut expr: &str) -> JitNode<'a> {
 }
 
 fn main() {
-    let j = Jit::new();
+    let mut j = Jit::new();
     let mut js = j.new_state();
 
     let nc = compile_rpn(&mut js, "32x9*5/+");

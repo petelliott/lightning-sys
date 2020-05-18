@@ -1,5 +1,4 @@
 use crate::bindings;
-use crate::Jit;
 use crate::Reg;
 use crate::JitNode;
 use crate::{JitWord, JitPointer};
@@ -10,7 +9,7 @@ use std::ptr::null_mut;
 #[derive(Debug)]
 pub struct JitState<'a> {
     pub(crate) state: *mut bindings::jit_state_t,
-    pub(crate) jit: &'a Jit,
+    pub(crate) phantom: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> Drop for JitState<'a> {
@@ -88,7 +87,7 @@ macro_rules! jit_impl_type {
 macro_rules! jit_impl_inner {
     ( $op:ident, $ifmt:ident $(, $arg:ident: $type:ty => $target:ty)* ) => {
         paste::item! {
-            pub fn $op(&self $(, $arg: $type)*) -> JitNode<'a> {
+            pub fn $op(&mut self $(, $arg: $type)*) -> JitNode<'a> {
                 JitNode{
                     node: unsafe { bindings::[< _jit_new_node_ $ifmt >](self.state, bindings::[< jit_code_t_jit_code_ $op >] $(, jit_impl_type!($arg.to_ffi() => $target))*) },
                     phantom: std::marker::PhantomData,
@@ -104,7 +103,7 @@ macro_rules! jit_impl_inner {
 macro_rules! jit_reexport {
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
         paste::item! {
-            pub fn $fn(&self $(, $arg: $typ )*) -> JitNode<'a> {
+            pub fn $fn(&mut self $(, $arg: $typ )*) -> JitNode<'a> {
                 JitNode{
                     node: unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) },
                     phantom: std::marker::PhantomData,
@@ -114,14 +113,14 @@ macro_rules! jit_reexport {
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> bool) => {
         paste::item! {
-            pub fn $fn(&self $(, $arg: $typ )*) -> bool {
+            pub fn $fn(&mut self $(, $arg: $typ )*) -> bool {
                 unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) != 0 }
             }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
         paste::item! {
-            pub fn $fn(&self $(, $arg: $typ )*) -> $ret {
+            pub fn $fn(&mut self $(, $arg: $typ )*) -> $ret {
                 unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) }
             }
         }
@@ -139,7 +138,7 @@ macro_rules! jit_imm {
 macro_rules! jit_branch {
     ( $fn:ident, $t:ident ) => {
         paste::item! {
-            pub fn $fn(&self, a: Reg, b: jit_imm!($t)) -> JitNode<'a> {
+            pub fn $fn(&mut self, a: Reg, b: jit_imm!($t)) -> JitNode<'a> {
                 JitNode{
                     node: unsafe{ bindings::_jit_new_node_pww(self.state, bindings::[< jit_code_t_jit_code_ $fn >], null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
                     phantom: std::marker::PhantomData,
@@ -151,12 +150,12 @@ macro_rules! jit_branch {
 
 macro_rules! jit_alias {
     ( $targ:ident => $new:ident $(, $arg:ident : $typ:ty )*; -> JitNode ) => {
-        pub fn $new(&self $(, $arg: $typ )*) -> JitNode<'a> {
+        pub fn $new(&mut self $(, $arg: $typ )*) -> JitNode<'a> {
             self.$targ($( $arg ),*)
         }
     };
     ( $targ:ident => $new:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
-        pub fn $new(&self $(, $arg: $typ )*) -> $ret {
+        pub fn $new(&mut self $(, $arg: $typ )*) -> $ret {
             self.$targ($( $arg ),*)
         }
     };
@@ -165,7 +164,7 @@ macro_rules! jit_alias {
 
 /// `JitState` utility methods
 impl<'a> JitState<'a> {
-    pub fn clear(&self) {
+    pub fn clear(&mut self) {
         unsafe {
             bindings::_jit_clear_state(self.state);
         }
@@ -173,11 +172,11 @@ impl<'a> JitState<'a> {
 
     // there is no way to require a function type in a trait bound
     // without specifying the number of arguments
-    pub unsafe fn emit<T: Copy>(&self) -> T {
+    pub unsafe fn emit<T: Copy>(&mut self) -> T {
         *(&bindings::_jit_emit(self.state) as *const *mut core::ffi::c_void as *const T)
     }
 
-    pub fn raw_emit(&self) -> JitPointer {
+    pub fn raw_emit(&mut self) -> JitPointer {
         unsafe {
             bindings::_jit_emit(self.state)
         }
@@ -204,7 +203,7 @@ impl<'a> JitState<'a> {
     jit_impl!(live, w);
     jit_impl!(align, w);
 
-    pub fn name(&self, name: &str) -> JitNode<'a> {
+    pub fn name(&mut self, name: &str) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         let cs = CString::new(name).unwrap();
         JitNode{
@@ -213,7 +212,7 @@ impl<'a> JitState<'a> {
         }
     }
 
-    pub fn note(&self, file: Option<&str>, line: u32) -> JitNode<'a> {
+    pub fn note(&mut self, file: Option<&str>, line: u32) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         let cs = file
             .map(CString::new)
@@ -485,7 +484,7 @@ impl<'a> JitState<'a> {
 
     jit_impl!(jmpr, w);
 
-    pub fn jmpi(&self) -> JitNode<'a> {
+    pub fn jmpi(&mut self) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         JitNode{
             node: unsafe { bindings::_jit_new_node_p(self.state, bindings::jit_code_t_jit_code_jmpi, std::ptr::null_mut::<c_void >()) },
