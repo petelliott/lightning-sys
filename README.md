@@ -12,7 +12,7 @@ Safe gnu lightning bindings for rust
 ```rust
 use lightning_sys::{Jit, Reg, JitPointer, JitWord};
 
-let jit = Jit::new();
+let mut jit = Jit::new();
 let mut js = jit.new_state();
 
 js.prolog();
@@ -38,7 +38,7 @@ use lightning_sys::{Jit, JitWord, Reg, JitPointer};
 use std::convert::TryInto;
 
 fn main() {
-    let jit = Jit::new();
+    let mut jit = Jit::new();
     let mut js = jit.new_state();
 
     // make sure this outlives any calls
@@ -72,7 +72,7 @@ fn main() {
 use lightning_sys::{Jit, JitWord, Reg, JitPointer, NULL};
 
 fn main() {
-    let jit = Jit::new();
+    let mut jit = Jit::new();
     let mut js = jit.new_state();
 
     let label = js.label();
@@ -118,7 +118,7 @@ fn main() {
 use lightning_sys::{Jit, JitWord, Reg, NULL};
 
 fn main() {
-    let jit = Jit::new();
+    let mut jit = Jit::new();
     let mut js = jit.new_state();
 
     let fact = js.forward();
