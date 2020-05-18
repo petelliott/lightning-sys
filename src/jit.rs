@@ -32,6 +32,8 @@ impl<'a> Jit<'a> {
         Jit(PhantomData)
     }
 
+    // This takes &mut self instead of &self because the unsafe operations wrapped herein are
+    // inherently mutating.
     pub fn new_state(&mut self) -> JitState {
         JitState {
             state: unsafe {
