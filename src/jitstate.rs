@@ -69,6 +69,17 @@ macro_rules! jit_impl {
     ( $op:ident, i_qww ) => { jit_impl_inner!($op, qww, a: Reg => i32, b: Reg => i32, c: Reg => JitWord, d: JitWord => _); };
 }
 
+macro_rules! jit_store {
+    ( $op:ident, ww ) => { jit_impl_inner!($op, ww, a: Reg => JitWord, b: Reg => JitWord); };
+
+    ( $op:ident, i_pw ) => { jit_impl_inner!($op, pw, a: JitPointer => _, b: Reg => JitWord); };
+
+    ( $op:ident, www ) => { jit_impl_inner!($op, www, a: Reg => JitWord, b: Reg => JitWord, c: Reg => JitWord); };
+
+    ( $op:ident, i_www ) => { jit_impl_inner!($op, www, a: JitWord => _, b: Reg => JitWord, c: Reg => JitWord); };
+
+}
+
 macro_rules! jit_impl_type {
     ( $e:expr => _ ) => { $e };
     ( $e:expr => $t:ty ) => { $e as $t };
@@ -77,7 +88,7 @@ macro_rules! jit_impl_type {
 macro_rules! jit_impl_inner {
     ( $op:ident, $ifmt:ident $(, $arg:ident: $type:ty => $target:ty)* ) => {
         paste::item! {
-            pub fn $op<'b>(&'b self $(, $arg: $type)*) -> JitNode<'b> {
+            pub fn $op(&self $(, $arg: $type)*) -> JitNode<'a> {
                 JitNode{
                     node: unsafe { bindings::[< _jit_new_node_ $ifmt >](self.state, bindings::[< jit_code_t_jit_code_ $op >] $(, jit_impl_type!($arg.to_ffi() => $target))*) },
                     phantom: std::marker::PhantomData,
@@ -93,7 +104,7 @@ macro_rules! jit_impl_inner {
 macro_rules! jit_reexport {
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
         paste::item! {
-            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
+            pub fn $fn(&self $(, $arg: $typ )*) -> JitNode<'a> {
                 JitNode{
                     node: unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) },
                     phantom: std::marker::PhantomData,
@@ -103,14 +114,14 @@ macro_rules! jit_reexport {
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> bool) => {
         paste::item! {
-            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> bool {
+            pub fn $fn(&self $(, $arg: $typ )*) -> bool {
                 unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) != 0 }
             }
         }
     };
     ( $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
         paste::item! {
-            pub fn $fn<'b>(&'b self $(, $arg: $typ )*) -> $ret {
+            pub fn $fn(&self $(, $arg: $typ )*) -> $ret {
                 unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) }
             }
         }
@@ -128,7 +139,7 @@ macro_rules! jit_imm {
 macro_rules! jit_branch {
     ( $fn:ident, $t:ident ) => {
         paste::item! {
-            pub fn $fn<'b>(&'b self, a: Reg, b: jit_imm!($t)) -> JitNode<'b> {
+            pub fn $fn(&self, a: Reg, b: jit_imm!($t)) -> JitNode<'a> {
                 JitNode{
                     node: unsafe{ bindings::_jit_new_node_pww(self.state, bindings::[< jit_code_t_jit_code_ $fn >], null_mut::<c_void>(), a.to_ffi() as JitWord, b.to_ffi() as JitWord) },
                     phantom: std::marker::PhantomData,
@@ -140,12 +151,12 @@ macro_rules! jit_branch {
 
 macro_rules! jit_alias {
     ( $targ:ident => $new:ident $(, $arg:ident : $typ:ty )*; -> JitNode ) => {
-        pub fn $new<'b>(&'b self $(, $arg: $typ )*) -> JitNode<'b> {
+        pub fn $new(&self $(, $arg: $typ )*) -> JitNode<'a> {
             self.$targ($( $arg ),*)
         }
     };
     ( $targ:ident => $new:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
-        pub fn $new<'b>(&'b self $(, $arg: $typ )*) -> $ret {
+        pub fn $new(&self $(, $arg: $typ )*) -> $ret {
             self.$targ($( $arg ),*)
         }
     };
@@ -153,7 +164,6 @@ macro_rules! jit_alias {
 }
 
 /// `JitState` utility methods
-#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     pub fn clear(&self) {
         unsafe {
@@ -190,12 +200,11 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of general instructions
-#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_impl!(live, w);
     jit_impl!(align, w);
 
-    pub fn name<'b>(&'b self, name: &str) -> JitNode<'b> {
+    pub fn name(&self, name: &str) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         let cs = CString::new(name).unwrap();
         JitNode{
@@ -204,11 +213,15 @@ impl<'a> JitState<'a> {
         }
     }
 
-    pub fn note<'b>(&'b self, file: &str, line: u32) -> JitNode<'b> {
+    pub fn note(&self, file: Option<&str>, line: u32) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
-        let cs = CString::new(file).unwrap();
+        let cs = file
+            .map(CString::new)
+            .map(Result::unwrap)
+            .map(|c| c.as_ptr())
+            .unwrap_or(core::ptr::null());
         JitNode{
-            node: unsafe { bindings::_jit_note(self.state, cs.as_ptr(), line as i32) },
+            node: unsafe { bindings::_jit_note(self.state, cs, line as i32) },
             phantom: std::marker::PhantomData,
         }
     }
@@ -393,16 +406,16 @@ impl<'a> JitState<'a> {
     #[cfg(target_pointer_width = "64")]
     jit_alias!(ldxr_l => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
 
-    jit_impl!(str_c, ww);
-    jit_impl!(sti_c, i_pw);
-    jit_impl!(str_s, ww);
-    jit_impl!(sti_s, i_pw);
-    jit_impl!(str_i, ww);
-    jit_impl!(sti_i, i_pw);
+    jit_store!(str_c, ww);
+    jit_store!(sti_c, i_pw);
+    jit_store!(str_s, ww);
+    jit_store!(sti_s, i_pw);
+    jit_store!(str_i, ww);
+    jit_store!(sti_i, i_pw);
     #[cfg(target_pointer_width = "64")]
-    jit_impl!(str_l, ww);
+    jit_store!(str_l, ww);
     #[cfg(target_pointer_width = "64")]
-    jit_impl!(sti_l, i_pw);
+    jit_store!(sti_l, i_pw);
     #[cfg(target_pointer_width = "32")]
     jit_alias!(str_i => str, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "32")]
@@ -412,24 +425,24 @@ impl<'a> JitState<'a> {
     #[cfg(target_pointer_width = "64")]
     jit_alias!(sti_i => sti, targ: JitPointer, src: Reg; -> JitNode);
 
-    jit_impl!(stxr_c, www);
-    jit_impl!(stxi_c, i_www);
-    jit_impl!(stxr_s, www);
-    jit_impl!(stxi_s, i_www);
-    jit_impl!(stxr_i, www);
-    jit_impl!(stxi_i, i_www);
+    jit_store!(stxr_c, www);
+    jit_store!(stxi_c, i_www);
+    jit_store!(stxr_s, www);
+    jit_store!(stxi_s, i_www);
+    jit_store!(stxr_i, www);
+    jit_store!(stxi_i, i_www);
     #[cfg(target_pointer_width = "64")]
-    jit_impl!(stxr_l, www);
+    jit_store!(stxr_l, www);
     #[cfg(target_pointer_width = "64")]
-    jit_impl!(stxi_l, i_www);
+    jit_store!(stxi_l, i_www);
     #[cfg(target_pointer_width = "32")]
-    jit_alias!(stxr_i => stxr, targ: Reg, src: Reg, off: Reg; -> JitNode);
+    jit_alias!(stxr_i => stxr, off: Reg, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "32")]
-    jit_alias!(stxi_i => stxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
+    jit_alias!(stxi_i => stxi, off: JitWord, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "64")]
-    jit_alias!(stxr_l => stxr, targ: Reg, src: Reg, off: Reg; -> JitNode);
+    jit_alias!(stxr_l => stxr, off: Reg, targ: Reg, src: Reg; -> JitNode);
     #[cfg(target_pointer_width = "64")]
-    jit_alias!(stxi_l => stxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
+    jit_alias!(stxi_l => stxi, off: JitWord, targ: Reg, src: Reg; -> JitNode);
 
     jit_branch!(bltr, r);
     jit_branch!(blti, i);
@@ -472,7 +485,7 @@ impl<'a> JitState<'a> {
 
     jit_impl!(jmpr, w);
 
-    pub fn jmpi<'b>(&'b self) -> JitNode<'b> {
+    pub fn jmpi(&self) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
         JitNode{
             node: unsafe { bindings::_jit_new_node_p(self.state, bindings::jit_code_t_jit_code_jmpi, std::ptr::null_mut::<c_void >()) },
@@ -511,7 +524,6 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of 32-bit float instructions
-#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_reexport!(arg_f; -> JitNode);
     jit_reexport!(getarg_f, reg: Reg, arg: &JitNode);
@@ -578,10 +590,10 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxr_f, www);
     jit_impl!(ldxi_f, i_www);
 
-    jit_impl!(str_f, ww);
-    jit_impl!(sti_f, i_pw);
-    jit_impl!(stxr_f, www);
-    jit_impl!(stxi_f, i_www);
+    jit_store!(str_f, ww);
+    jit_store!(sti_f, i_pw);
+    jit_store!(stxr_f, www);
+    jit_store!(stxi_f, i_www);
 
     jit_branch!(bltr_f, r);
     jit_branch!(blti_f, f);
@@ -618,7 +630,6 @@ impl<'a> JitState<'a> {
 }
 
 /// implmentations of 64-bit float instructions
-#[allow(clippy::needless_lifetimes)] // TODO
 impl<'a> JitState<'a> {
     jit_reexport!(arg_d; -> JitNode);
     jit_reexport!(getarg_d, reg: Reg, arg: &JitNode);
@@ -685,10 +696,10 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxr_d, www);
     jit_impl!(ldxi_d, i_www);
 
-    jit_impl!(str_d, ww);
-    jit_impl!(sti_d, i_pw);
-    jit_impl!(stxr_d, www);
-    jit_impl!(stxi_d, i_www);
+    jit_store!(str_d, ww);
+    jit_store!(sti_d, i_pw);
+    jit_store!(stxr_d, www);
+    jit_store!(stxi_d, i_www);
 
     jit_branch!(bltr_d, r);
     jit_branch!(blti_d, d);

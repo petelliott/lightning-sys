@@ -6,6 +6,7 @@ pub enum Reg {
     R(bindings::jit_gpr_t),
     V(bindings::jit_gpr_t),
     F(bindings::jit_gpr_t),
+    FP,
 }
 
 pub struct JitNode<'a> {
@@ -48,6 +49,8 @@ impl ToFFI for Reg {
             } else {
                 panic!("register 'F{}' is not supported", i);
             },
+
+            Reg::FP => unsafe { bindings::lgsys_JIT_FP },
         }
     }
 }

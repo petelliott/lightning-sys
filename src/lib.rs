@@ -37,7 +37,7 @@
 //!     // make sure this outlives any calls
 //!     let cs = CString::new("generated %d bytes\n").unwrap();
 //!
-//!     let start = js.note(file!(), line!());
+//!     let start = js.note(Some(file!()), line!());
 //!     js.prolog();
 //!     let inarg = js.arg();
 //!     js.getarg(Reg::R(1), &inarg);
@@ -48,7 +48,7 @@
 //!     js.finishi(libc::printf as JitPointer);
 //!     js.ret();
 //!     js.epilog();
-//!     let end = js.note(file!(), line!());
+//!     let end = js.note(Some(file!()), line!());
 //!
 //!     let my_function = unsafe{ js.emit::<extern fn(JitWord)>() };
 //!     /* call the generated code, passing its size as argument */
