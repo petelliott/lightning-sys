@@ -177,6 +177,12 @@ mod bindings;
 #[macro_use]
 extern crate lazy_static;
 
+// The `raw` module comes first so that it can provide macros during parsing of
+// other modules. It is not yet part of the crate's public API, but in the
+// spirit of *-sys modules exposing lowest-level bindings, it may someday be so.
+#[macro_use]
+pub(crate) mod raw;
+
 pub mod jit;
 pub use jit::Jit;
 
