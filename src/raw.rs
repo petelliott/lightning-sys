@@ -266,3 +266,48 @@ macro_rules! jit_entries {
 
 include!(concat!(env!("OUT_DIR"), "/entries.rs"));
 
+#[test]
+#[allow(unreachable_code)]
+#[allow(unused_variables)]
+fn trivial_invocation() {
+    trait MyDefault { fn default() -> Self; }
+
+    impl MyDefault for jit_word_t    { fn default() -> Self { Default::default() } }
+
+    impl MyDefault for jit_float32_t { fn default() -> Self { Default::default() } }
+    impl MyDefault for jit_float64_t { fn default() -> Self { Default::default() } }
+
+    #[cfg(target_pointer_width = "64")] /* avoid conflicting with jit_word_t */
+    impl MyDefault for jit_int32_t   { fn default() -> Self { Default::default() } }
+
+    impl MyDefault for jit_pointer_t { fn default() -> Self { crate::types::NULL } }
+
+    macro_rules! jit_entry {
+        (   $entry:ident( $enum_in:ident $(, $inarg:ident )* )
+              => $root:ident
+              => [ new_node $( , $suffix:ident )* ]
+              => $invokes:ident( $jit:ident $( , $outarg:ident )* )
+        ) => {
+            /* skip */
+        };
+        (   $entry:ident( $( $inarg:ident ),* )
+              => $root:ident
+              => [ $stem:ident $( , $suffix:ident )* ]
+              => $invokes:ident( $enum:ident $( , $outarg:ident )* )
+        ) => {
+            {
+                $( let $inarg = MyDefault::default(); )*
+                let _ = $crate::Jit::new().new_state().$entry( $( $inarg ),* );
+            }
+        };
+    }
+
+    macro_rules! jit_entries {
+        ( $( $tokens:tt )* ) => {
+            unsafe { $( $tokens )* }
+        };
+    }
+
+    include!{ concat!(env!("OUT_DIR"), "/entries.rs") }
+}
+
