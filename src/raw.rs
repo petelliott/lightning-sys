@@ -1,9 +1,49 @@
+//! Provides lowest-level `unsafe` bindings to the GNU lightning API, without type safety.
+//!
+//! This module implements the underpinnings of the high-level, type-safe API provided by the
+//! crate. It may itself someday form part of the crate's public API, as well.
+//!
+//! This module implements `unsafe` entry points corresponding to the macro-based C API exposed by
+//! GNU lightning. A direct translation of the API is not possible, since the public C API
+//! explicitly assumes the presence of a lexical `_jit` state element in an un-hygienic way.
+//!
+//! The Rust APIs provided here look like this:
+//! ```ignore
+//! impl<'j> JitState<'j> {
+//!     pub unsafe fn jit_absr_d(&mut self, u: jit_word_t, v: jit_word_t) -> JitNode<'j> {
+//!         self.jit_new_node_ww(jit_code_t::jit_code_absr_d, u, v)
+//!     }
+//!
+//!     pub unsafe fn jit_new_node_ww(
+//!         &mut self,
+//!         c: jit_code_t,
+//!         u: jit_word_t,
+//!         v: jit_word_t,
+//!     ) -> JitNode<'j> {
+//!         JitNode {
+//!             node: _jit_new_node_ww(self.state, c, u, v),
+//!             phantom: std::marker::PhantomData,
+//!         }
+//!     }
+//! }
+//! ```
+//! corresponding to the original C macro definitions:
+//! ```c
+//! #define jit_absr_d(u,v)         jit_new_node_ww(jit_code_absr_d,u,v)
+//! #define jit_new_node_ww(c,u,v)  _jit_new_node_ww(_jit,c,u,v)
+//! ```
+
 use crate::bindings::*;
 use crate::JitNode;
 use crate::jitstate::JitState;
 
 use tt_call::*;
 
+/// Given a `jit_new_node` macro name as an identifier, return the types of its
+/// parameters. <sup>**[tt-call]**</sup>
+///
+/// Input: A `suffix` key containing an identifier starting with `jit_new_node`
+/// Output: A `parmtypes` key containing a comma-separated list of types
 macro_rules! jit_signature {
     { $c:tt suffix = [{ jit_new_node     }] } => { tt_return!{ $c parmtypes = [{                                                  }] } };
     { $c:tt suffix = [{ jit_new_node_d   }] } => { tt_return!{ $c parmtypes = [{ jit_float64_t                                    }] } };
@@ -26,6 +66,14 @@ macro_rules! jit_signature {
     { $c:tt suffix = [{ jit_new_node_www }] } => { tt_return!{ $c parmtypes = [{ jit_word_t, jit_word_t, jit_word_t               }] } };
 }
 
+/// Calls `zip_params` after dropping zero or more tokens from each list.
+/// <sup>**[tt-call]**</sup>
+///
+/// Input: An `input` key containing three parenthesized lists:
+///     1. A list of tokens, the length of which list determines how many to drop
+///     1. A list of comma-separated identifiers to pass to `zip_params`
+///     1. A list of comma-separated types to pass to `zip_params`
+/// Output: An `input` key conforming to the expectations of `zip_params`
 macro_rules! eat_params {
     {
         $caller:tt
@@ -63,6 +111,15 @@ macro_rules! eat_params {
     };
 }
 
+/// Zips a list of identifiers with a list of types into a parameter list.
+/// <sup>**[tt-call]**</sup>
+///
+/// Input: An `input` key containing three parenthesized lists:
+///     1. A list of comma-separated identifiers
+///     1. A list of comma-separated types
+///     1. A list of tokens to append to
+/// Output: A `zipped` key containing a list of tokens that can be inserted
+/// between parentheses to form a function's parameter list.
 macro_rules! zip_params {
     {
         $caller:tt
@@ -96,6 +153,8 @@ macro_rules! zip_params {
     };
 }
 
+/// Defines a `pub unsafe fn` with a given name, parameters, and body.
+/// <sup>**[tt-call]**</sup>
 macro_rules! private_make_func {
     {
         func = [{ $fname:ident $( < $( $life:lifetime ),+ > )? }]
@@ -111,6 +170,8 @@ macro_rules! private_make_func {
     };
 }
 
+/// Defines a `pub unsafe fn` with a given name, parameters, and body.
+/// <sup>**[tt-call]**</sup>
 macro_rules! make_func {
     {
         func = [{ $fname:ident $( < $( $life:lifetime ),+ > )? }]
@@ -134,6 +195,7 @@ macro_rules! make_func {
     };
 }
 
+/// Defines an associated function for `JitState` for each `jit_entry`.
 macro_rules! jit_entry {
     (   $entry:ident( $enum_in:ident $(, $inarg:ident )* )
           => $root:ident
