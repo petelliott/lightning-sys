@@ -79,18 +79,12 @@ macro_rules! jit_store {
 
 }
 
-macro_rules! jit_impl_type {
-    ( $e:expr => _ ) => { $e };
-    ( $e:expr => $t:ty ) => { $e as $t };
-}
-
 macro_rules! jit_impl_inner {
     ( $op:ident, $ifmt:ident $(, $arg:ident: $type:ty => $target:ty)* ) => {
         paste::item! {
             pub fn $op(&mut self $(, $arg: $type)*) -> JitNode<'a> {
-                JitNode{
-                    node: unsafe { bindings::[< _jit_new_node_ $ifmt >](self.state, bindings::jit_code_t::[< jit_code_ $op >] $(, jit_impl_type!($arg.to_ffi() => $target))*) },
-                    phantom: std::marker::PhantomData,
+                unsafe {
+                    self.[< jit_ $op >]($( $arg.to_ffi().into() ),*)
                 }
             }
         }
