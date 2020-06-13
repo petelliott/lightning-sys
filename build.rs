@@ -1,9 +1,10 @@
 extern crate bindgen;
 extern crate flate2;
-extern crate reqwest;
+extern crate ftp;
 extern crate tar;
 
 use flate2::read::GzDecoder;
+use ftp::{FtpError, FtpStream};
 use std::env;
 use std::io::Read;
 use std::path::{PathBuf, Path};
@@ -11,9 +12,24 @@ use std::process::Command;
 use tar::Archive;
 
 fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let release = include_str!("release");
-    let target = format!("http://ftp.gnu.org/gnu/lightning/{}.tar.gz", release);
-    unpack(reqwest::blocking::get(&target)?, prefix)?;
+    use std::net::ToSocketAddrs;
+
+    let release = include_str!("release").trim_end();
+    // Force IPv4 for now, because the `ftp` crate does not switch to PASV mode correctly when
+    // connecting over IPv6.
+    let addr = ("ftp.gnu.org", 21)
+        .to_socket_addrs()?
+        .find(|a| match a { std::net::SocketAddr::V4(_) => true, _ => false })
+        .expect("could not find an IPv4 address");
+
+    let mut ftp = FtpStream::connect(addr)?;
+    ftp.login("anonymous", "")?;
+    let fname = format!("/gnu/lightning/{}.tar.gz", release);
+    ftp.retr(&fname, |reader| {
+        unpack(reader, prefix).map_err(|e| FtpError::ConnectionError(e))
+    })?;
+
+    ftp.quit()?;
 
     let cflags = cc::Build::new().get_compiler().cflags_env();
     let flags = vec![
