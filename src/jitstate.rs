@@ -540,6 +540,7 @@ impl<'a> JitState<'a> {
     jit_impl!(subr_f, www);
     jit_impl!(subi_f, i_wwf);
     //TODO: rsbr_f
+    jit_impl!(rsbi_f, i_wwf);
     jit_impl!(mulr_f, www);
     jit_impl!(muli_f, i_wwf);
     jit_impl!(divr_f, www);
@@ -648,6 +649,7 @@ impl<'a> JitState<'a> {
     jit_impl!(subr_d, www);
     jit_impl!(subi_d, i_wwd);
     //TODO: rsbr_d
+    jit_impl!(rsbi_d, i_wwd);
     jit_impl!(mulr_d, www);
     jit_impl!(muli_d, i_wwd);
     jit_impl!(divr_d, www);
