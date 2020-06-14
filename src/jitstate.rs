@@ -187,6 +187,9 @@ impl<'a> JitState<'a> {
     jit_reexport!(forward_p, node: &JitNode; -> bool);
     jit_reexport!(indirect_p, node: &JitNode; -> bool);
     jit_reexport!(target_p, node: &JitNode; -> bool);
+    jit_reexport!(arg_register_p, node: &JitNode; -> bool);
+    jit_reexport!(callee_save_p, reg: Reg; -> bool);
+    jit_reexport!(pointer_p, ptr: JitPointer; -> bool);
 
     jit_reexport!(patch, instr: &JitNode);
     jit_reexport!(patch_at, instr: &JitNode, target: &JitNode);
