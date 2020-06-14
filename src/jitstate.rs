@@ -323,7 +323,9 @@ impl<'a> JitState<'a> {
     jit_impl!(eqr, www);
     jit_impl!(eqi, i_www);
     jit_impl!(ger, www);
+    jit_impl!(ger_u, www);
     jit_impl!(gei, i_www);
+    jit_impl!(gei_u, i_www);
     jit_impl!(gtr, www);
     jit_impl!(gti, i_www);
     jit_impl!(gtr_u, www);
@@ -388,8 +390,10 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxi_c, i_www);
     jit_impl!(ldxr_uc, www);
     jit_impl!(ldxi_uc, i_www);
+    jit_impl!(ldxi_s, www);
     jit_impl!(ldxr_s, www);
     jit_impl!(ldxi_us, i_www);
+    jit_impl!(ldxr_us, i_www);
     jit_impl!(ldxr_i, www);
     jit_impl!(ldxi_i, i_www);
     #[cfg(target_pointer_width = "64")]
