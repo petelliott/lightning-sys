@@ -323,7 +323,9 @@ impl<'a> JitState<'a> {
     jit_impl!(eqr, www);
     jit_impl!(eqi, i_www);
     jit_impl!(ger, www);
+    jit_impl!(ger_u, www);
     jit_impl!(gei, i_www);
+    jit_impl!(gei_u, i_www);
     jit_impl!(gtr, www);
     jit_impl!(gti, i_www);
     jit_impl!(gtr_u, www);
@@ -388,8 +390,10 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxi_c, i_www);
     jit_impl!(ldxr_uc, www);
     jit_impl!(ldxi_uc, i_www);
+    jit_impl!(ldxi_s, www);
     jit_impl!(ldxr_s, www);
     jit_impl!(ldxi_us, i_www);
+    jit_impl!(ldxr_us, i_www);
     jit_impl!(ldxr_i, www);
     jit_impl!(ldxi_i, i_www);
     #[cfg(target_pointer_width = "64")]
@@ -449,6 +453,8 @@ impl<'a> JitState<'a> {
     jit_branch!(blti_u, i);
     jit_branch!(bler, r);
     jit_branch!(blei, i);
+    jit_branch!(bler_u, r);
+    jit_branch!(blei_u, i);
     jit_branch!(beqr, r);
     jit_branch!(beqi, i);
     jit_branch!(bger, r);
@@ -534,6 +540,7 @@ impl<'a> JitState<'a> {
     jit_impl!(subr_f, www);
     jit_impl!(subi_f, i_wwf);
     //TODO: rsbr_f
+    jit_impl!(rsbi_f, i_wwf);
     jit_impl!(mulr_f, www);
     jit_impl!(muli_f, i_wwf);
     jit_impl!(divr_f, www);
@@ -616,6 +623,8 @@ impl<'a> JitState<'a> {
     jit_branch!(bungei_f, f);
     jit_branch!(bungtr_f, r);
     jit_branch!(bungti_f, f);
+    jit_branch!(bltgtr_f, r);
+    jit_branch!(bltgti_f, d);
     jit_branch!(bordr_f, r);
     jit_branch!(bordi_f, f);
     jit_branch!(bunordr_f, r);
@@ -640,6 +649,7 @@ impl<'a> JitState<'a> {
     jit_impl!(subr_d, www);
     jit_impl!(subi_d, i_wwd);
     //TODO: rsbr_d
+    jit_impl!(rsbi_d, i_wwd);
     jit_impl!(mulr_d, www);
     jit_impl!(muli_d, i_wwd);
     jit_impl!(divr_d, www);
@@ -722,6 +732,8 @@ impl<'a> JitState<'a> {
     jit_branch!(bungei_d, d);
     jit_branch!(bungtr_d, r);
     jit_branch!(bungti_d, d);
+    jit_branch!(bltgtr_d, r);
+    jit_branch!(bltgti_d, d);
     jit_branch!(bordr_d, r);
     jit_branch!(bordi_d, d);
     jit_branch!(bunordr_d, r);
