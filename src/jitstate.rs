@@ -449,6 +449,8 @@ impl<'a> JitState<'a> {
     jit_branch!(blti_u, i);
     jit_branch!(bler, r);
     jit_branch!(blei, i);
+    jit_branch!(bler_u, r);
+    jit_branch!(blei_u, i);
     jit_branch!(beqr, r);
     jit_branch!(beqi, i);
     jit_branch!(bger, r);
@@ -616,6 +618,8 @@ impl<'a> JitState<'a> {
     jit_branch!(bungei_f, f);
     jit_branch!(bungtr_f, r);
     jit_branch!(bungti_f, f);
+    jit_branch!(bltgtr_f, r);
+    jit_branch!(bltgti_f, d);
     jit_branch!(bordr_f, r);
     jit_branch!(bordi_f, f);
     jit_branch!(bunordr_f, r);
@@ -722,6 +726,8 @@ impl<'a> JitState<'a> {
     jit_branch!(bungei_d, d);
     jit_branch!(bungtr_d, r);
     jit_branch!(bungti_d, d);
+    jit_branch!(bltgtr_d, r);
+    jit_branch!(bltgti_d, d);
     jit_branch!(bordr_d, r);
     jit_branch!(bordi_d, d);
     jit_branch!(bunordr_d, r);
