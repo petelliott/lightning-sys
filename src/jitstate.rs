@@ -220,6 +220,65 @@ impl<'a> JitState<'a> {
     jit_reexport!(print);
 }
 
+/// implementations of word-size-dependent aliases
+impl<'a> JitState<'a> {
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(getarg_l => getarg, reg: Reg, node: &JitNode);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(getarg_i => getarg, reg: Reg, node: &JitNode);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(ldr_i => ldr, targ: Reg, src: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(ldi_i => ldi, targ: Reg, src: JitPointer; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(ldr_l => ldr, targ: Reg, src: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(ldi_l => ldi, targ: Reg, src: JitPointer; -> JitNode);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(ldxr_i => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(ldxi_i => ldxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(ldxr_l => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(ldxi_l => ldxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(str_i => str, targ: Reg, src: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(sti_i => sti, targ: JitPointer, src: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(str_l => str, targ: Reg, src: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(sti_i => sti, targ: JitPointer, src: Reg; -> JitNode);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(stxr_i => stxr, off: Reg, targ: Reg, src: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(stxi_i => stxi, off: JitWord, targ: Reg, src: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(stxr_l => stxr, off: Reg, targ: Reg, src: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(stxi_l => stxi, off: JitWord, targ: Reg, src: Reg; -> JitNode);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(retval_i => retval, rv: Reg);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(retval_l => retval, rv: Reg);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(truncr_f_i => truncr_f, int: Reg, float: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(truncr_f_l => truncr_f, int: Reg, float: Reg; -> JitNode);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(truncr_d_i => truncr_d, int: Reg, float: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(truncr_d_l => truncr_d, int: Reg, float: Reg; -> JitNode);
+}
+
 /// implmentations of general instructions
 impl<'a> JitState<'a> {
     jit_impl!(live, w);
@@ -269,10 +328,6 @@ impl<'a> JitState<'a> {
     jit_reexport!(getarg_ui, reg: Reg, node: &JitNode);
     #[cfg(target_pointer_width = "64")]
     jit_reexport!(getarg_l, reg: Reg, node: &JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(getarg_l => getarg, reg: Reg, node: &JitNode);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(getarg_i => getarg, reg: Reg, node: &JitNode);
 
     jit_reexport!(putargr, reg: Reg, arg: &JitNode);
     jit_reexport!(putargi, imm: JitWord, arg: &JitNode);
@@ -403,14 +458,6 @@ impl<'a> JitState<'a> {
     jit_impl!(ldr_l, ww);
     #[cfg(target_pointer_width = "64")]
     jit_impl!(ldi_l, i_wp);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(ldr_i => ldr, targ: Reg, src: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(ldi_i => ldi, targ: Reg, src: JitPointer; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(ldr_l => ldr, targ: Reg, src: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(ldi_l => ldi, targ: Reg, src: JitPointer; -> JitNode);
 
     jit_impl!(ldxr_c, www);
     jit_impl!(ldxi_c, i_www);
@@ -430,14 +477,6 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxr_l, www);
     #[cfg(target_pointer_width = "64")]
     jit_impl!(ldxi_l, i_www);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(ldxr_i => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(ldxi_i => ldxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(ldxr_l => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(ldxi_l => ldxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
 
     jit_store!(str_c, ww);
     jit_store!(sti_c, i_pw);
@@ -449,14 +488,6 @@ impl<'a> JitState<'a> {
     jit_store!(str_l, ww);
     #[cfg(target_pointer_width = "64")]
     jit_store!(sti_l, i_pw);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(str_i => str, targ: Reg, src: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(sti_i => sti, targ: JitPointer, src: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(str_l => str, targ: Reg, src: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(sti_i => sti, targ: JitPointer, src: Reg; -> JitNode);
 
     jit_store!(stxr_c, www);
     jit_store!(stxi_c, i_www);
@@ -468,14 +499,6 @@ impl<'a> JitState<'a> {
     jit_store!(stxr_l, www);
     #[cfg(target_pointer_width = "64")]
     jit_store!(stxi_l, i_www);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(stxr_i => stxr, off: Reg, targ: Reg, src: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(stxi_i => stxi, off: JitWord, targ: Reg, src: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(stxr_l => stxr, off: Reg, targ: Reg, src: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(stxi_l => stxi, off: JitWord, targ: Reg, src: Reg; -> JitNode);
 
     jit_branch!(bltr, r);
     jit_branch!(blti, i);
@@ -567,10 +590,6 @@ impl<'a> JitState<'a> {
     jit_reexport!(retval_ui, rv: Reg);
     #[cfg(target_pointer_width = "64")]
     jit_reexport!(retval_l, rv: Reg);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(retval_i => retval, rv: Reg);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(retval_l => retval, rv: Reg);
     jit_reexport!(epilog);
 
     jit_reexport!(frame, size: i32);
@@ -634,10 +653,6 @@ impl<'a> JitState<'a> {
     jit_impl!(truncr_f_i, ww);
     #[cfg(target_pointer_width = "64")]
     jit_impl!(truncr_f_l, ww);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(truncr_f_i => truncr_f, int: Reg, float: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(truncr_f_l => truncr_f, int: Reg, float: Reg; -> JitNode);
 
     jit_impl!(extr_f, ww);
     jit_impl!(extr_d_f, ww);
@@ -747,10 +762,6 @@ impl<'a> JitState<'a> {
     jit_impl!(truncr_d_i, ww);
     #[cfg(target_pointer_width = "64")]
     jit_impl!(truncr_d_l, ww);
-    #[cfg(target_pointer_width = "32")]
-    jit_alias!(truncr_d_i => truncr_d, int: Reg, float: Reg; -> JitNode);
-    #[cfg(target_pointer_width = "64")]
-    jit_alias!(truncr_d_l => truncr_d, int: Reg, float: Reg; -> JitNode);
 
     jit_impl!(extr_d, ww);
     jit_impl!(extr_f_d, ww);
