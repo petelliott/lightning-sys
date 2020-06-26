@@ -276,7 +276,10 @@ impl<'a> JitState<'a> {
     jit_impl!(subxr, www);
     jit_impl!(subxi, i_www);
 
-    //TODO: jit_rsbr
+    pub fn rsbr(&mut self, a: Reg, b: Reg, c: Reg) -> JitNode<'a> {
+        self.subr(a, c, b)
+    }
+
     jit_impl!(rsbi, i_www);
 
     jit_impl!(mulr, www);
@@ -393,10 +396,10 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxi_c, i_www);
     jit_impl!(ldxr_uc, www);
     jit_impl!(ldxi_uc, i_www);
-    jit_impl!(ldxi_s, www);
     jit_impl!(ldxr_s, www);
+    jit_impl!(ldxi_s, i_www);
+    jit_impl!(ldxr_us, www);
     jit_impl!(ldxi_us, i_www);
-    jit_impl!(ldxr_us, i_www);
     jit_impl!(ldxr_i, www);
     jit_impl!(ldxi_i, i_www);
     #[cfg(target_pointer_width = "64")]
@@ -542,7 +545,11 @@ impl<'a> JitState<'a> {
     jit_impl!(addi_f, i_wwf);
     jit_impl!(subr_f, www);
     jit_impl!(subi_f, i_wwf);
-    //TODO: rsbr_f
+
+    pub fn rsbr_f(&mut self, a: Reg, b: Reg, c: Reg) -> JitNode<'a> {
+        self.subr_f(a, c, b)
+    }
+
     jit_impl!(rsbi_f, i_wwf);
     jit_impl!(mulr_f, www);
     jit_impl!(muli_f, i_wwf);
@@ -627,7 +634,7 @@ impl<'a> JitState<'a> {
     jit_branch!(bungtr_f, r);
     jit_branch!(bungti_f, f);
     jit_branch!(bltgtr_f, r);
-    jit_branch!(bltgti_f, d);
+    jit_branch!(bltgti_f, f);
     jit_branch!(bordr_f, r);
     jit_branch!(bordi_f, f);
     jit_branch!(bunordr_f, r);
@@ -651,7 +658,11 @@ impl<'a> JitState<'a> {
     jit_impl!(addi_d, i_wwd);
     jit_impl!(subr_d, www);
     jit_impl!(subi_d, i_wwd);
-    //TODO: rsbr_d
+
+    pub fn rsbr_d(&mut self, a: Reg, b: Reg, c: Reg) -> JitNode<'a> {
+        self.subr_d(a, c, b)
+    }
+
     jit_impl!(rsbi_d, i_wwd);
     jit_impl!(mulr_d, www);
     jit_impl!(muli_d, i_wwd);
