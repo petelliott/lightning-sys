@@ -21,31 +21,25 @@ impl<'a> Drop for JitState<'a> {
 }
 
 macro_rules! jit_reexport {
-    ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
-        paste::item! {
-            pub fn $fn(&mut self $(, $arg: $typ )*) -> JitNode<'a> {
-                JitNode{
-                    node: unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) },
-                    phantom: std::marker::PhantomData,
-                }
+    ( $orig:ident, $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
+        pub fn $fn(&mut self $(, $arg: $typ )*) -> JitNode<'a> {
+            JitNode{
+                node: unsafe { bindings::$orig(self.state $(, $arg.to_ffi())*) },
+                phantom: std::marker::PhantomData,
             }
         }
     };
-    ( $fn:ident $(, $arg:ident : $typ:ty )*; -> bool) => {
-        paste::item! {
-            pub fn $fn(&mut self $(, $arg: $typ )*) -> bool {
-                unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) != 0 }
-            }
+    ( $orig:ident, $fn:ident $(, $arg:ident : $typ:ty )*; -> bool) => {
+        pub fn $fn(&mut self $(, $arg: $typ )*) -> bool {
+            unsafe { bindings::$orig(self.state $(, $arg.to_ffi())*) != 0 }
         }
     };
-    ( $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
-        paste::item! {
-            pub fn $fn(&mut self $(, $arg: $typ )*) -> $ret {
-                unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) }
-            }
+    ( $orig:ident, $fn:ident $(, $arg:ident : $typ:ty )*; -> $ret:ty) => {
+        pub fn $fn(&mut self $(, $arg: $typ )*) -> $ret {
+            unsafe { bindings::$orig(self.state $(, $arg.to_ffi())*) }
         }
     };
-    ( $fn:ident $(, $arg:ident : $typ:ty )*) => { jit_reexport!($fn $(, $arg : $typ)*; -> ()); }
+    ( $orig:ident, $fn:ident $(, $arg:ident : $typ:ty )*) => { jit_reexport!($orig, $fn $(, $arg : $typ)*; -> ()); }
 }
 
 macro_rules! jit_alias {
@@ -81,21 +75,21 @@ impl<'a> JitState<'a> {
         *(&self.emit() as *const *mut core::ffi::c_void as *const T)
     }
 
-    jit_reexport!(emit; -> JitPointer);
+    jit_reexport!(_jit_emit, emit; -> JitPointer);
 
-    jit_reexport!(address, node: &JitNode; -> JitPointer);
+    jit_reexport!(_jit_address, address, node: &JitNode; -> JitPointer);
 
-    jit_reexport!(forward_p, node: &JitNode; -> bool);
-    jit_reexport!(indirect_p, node: &JitNode; -> bool);
-    jit_reexport!(target_p, node: &JitNode; -> bool);
-    jit_reexport!(arg_register_p, node: &JitNode; -> bool);
-    jit_reexport!(callee_save_p, reg: Reg; -> bool);
-    jit_reexport!(pointer_p, ptr: JitPointer; -> bool);
+    jit_reexport!(_jit_forward_p, forward_p, node: &JitNode; -> bool);
+    jit_reexport!(_jit_indirect_p, indirect_p, node: &JitNode; -> bool);
+    jit_reexport!(_jit_target_p, target_p, node: &JitNode; -> bool);
+    jit_reexport!(_jit_arg_register_p, arg_register_p, node: &JitNode; -> bool);
+    jit_reexport!(_jit_callee_save_p, callee_save_p, reg: Reg; -> bool);
+    jit_reexport!(_jit_pointer_p, pointer_p, ptr: JitPointer; -> bool);
 
-    jit_reexport!(patch, instr: &JitNode);
-    jit_reexport!(patch_at, instr: &JitNode, target: &JitNode);
-    jit_reexport!(patch_abs, instr: &JitNode, target: JitPointer);
-    jit_reexport!(realize);
+    jit_reexport!(_jit_patch, patch, instr: &JitNode);
+    jit_reexport!(_jit_patch_at, patch_at, instr: &JitNode, target: &JitNode);
+    jit_reexport!(_jit_patch_abs, patch_abs, instr: &JitNode, target: JitPointer);
+    jit_reexport!(_jit_realize, realize);
 
     // get_code needs argument mangling that jit_reexport currently does not
     // provide
@@ -103,7 +97,7 @@ impl<'a> JitState<'a> {
         unsafe { bindings::_jit_get_code(self.state, pointer_from(code_size)) }
     }
 
-    jit_reexport!(set_code, buf: JitPointer, size: JitWord; -> ());
+    jit_reexport!(_jit_set_code, set_code, buf: JitPointer, size: JitWord; -> ());
 
     // get_data needs argument mangling that jit_reexport currently does not
     // provide
@@ -121,9 +115,9 @@ impl<'a> JitState<'a> {
         }
     }
 
-    jit_reexport!(set_data, buf: JitPointer, data_size: JitWord, flags: JitWord; -> ());
+    jit_reexport!(_jit_set_data, set_data, buf: JitPointer, data_size: JitWord, flags: JitWord; -> ());
 
-    jit_reexport!(print);
+    jit_reexport!(_jit_print, print);
 }
 
 /// implementations of word-size-dependent aliases
@@ -210,51 +204,37 @@ impl<'a> JitState<'a> {
         }
     }
 
-    jit_reexport!(label; -> JitNode);
-    jit_reexport!(forward; -> JitNode);
-    jit_reexport!(indirect; -> JitNode);
-    jit_reexport!(link, node: &JitNode);
+    jit_reexport!(_jit_label, label; -> JitNode);
+    jit_reexport!(_jit_forward, forward; -> JitNode);
+    jit_reexport!(_jit_indirect, indirect; -> JitNode);
+    jit_reexport!(_jit_link, link, node: &JitNode);
 
-    jit_reexport!(prolog);
-    jit_reexport!(ellipsis);
+    jit_reexport!(_jit_prolog, prolog);
+    jit_reexport!(_jit_ellipsis, ellipsis);
 
-    jit_reexport!(allocai, size: i32; -> i32);
-    jit_reexport!(allocar, off: Reg, size: Reg);
+    jit_reexport!(_jit_allocai, allocai, size: i32; -> i32);
+    jit_reexport!(_jit_allocar, allocar, off: Reg, size: Reg);
 
-    jit_reexport!(arg; -> JitNode);
+    jit_reexport!(_jit_arg, arg; -> JitNode);
 
-    jit_reexport!(getarg_c, reg: Reg, node: &JitNode);
-    jit_reexport!(getarg_uc, reg: Reg, node: &JitNode);
-    jit_reexport!(getarg_s, reg: Reg, node: &JitNode);
-    jit_reexport!(getarg_us, reg: Reg, node: &JitNode);
-    jit_reexport!(getarg_i, reg: Reg, node: &JitNode);
+    jit_reexport!(_jit_getarg_c, getarg_c, reg: Reg, node: &JitNode);
+    jit_reexport!(_jit_getarg_uc, getarg_uc, reg: Reg, node: &JitNode);
+    jit_reexport!(_jit_getarg_s, getarg_s, reg: Reg, node: &JitNode);
+    jit_reexport!(_jit_getarg_us, getarg_us, reg: Reg, node: &JitNode);
+    jit_reexport!(_jit_getarg_i, getarg_i, reg: Reg, node: &JitNode);
     #[cfg(target_pointer_width = "64")]
-    jit_reexport!(getarg_ui, reg: Reg, node: &JitNode);
+    jit_reexport!(_jit_getarg_ui, getarg_ui, reg: Reg, node: &JitNode);
     #[cfg(target_pointer_width = "64")]
-    jit_reexport!(getarg_l, reg: Reg, node: &JitNode);
+    jit_reexport!(_jit_getarg_l, getarg_l, reg: Reg, node: &JitNode);
 
-    jit_reexport!(putargr, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargi, imm: JitWord, arg: &JitNode);
+    jit_reexport!(_jit_putargr, putargr, reg: Reg, arg: &JitNode);
+    jit_reexport!(_jit_putargi, putargi, imm: JitWord, arg: &JitNode);
 
-    jit_reexport!(va_push, arg: Reg);
+    jit_reexport!(_jit_va_push, va_push, arg: Reg);
 
     pub fn rsbr(&mut self, a: Reg, b: Reg, c: Reg) -> JitNode<'a> {
         self.subr(a, c, b)
     }
-
-    jit_reexport!(prepare);
-    jit_reexport!(pushargr, arg: Reg);
-    jit_reexport!(pushargi, arg: JitWord);
-    jit_reexport!(finishr, arg: Reg);
-    jit_reexport!(finishi, arg: JitPointer; -> JitNode);
-    jit_reexport!(ret);
-    jit_reexport!(retr, rv: Reg);
-    jit_reexport!(reti, rv: JitWord);
-    jit_reexport!(retval_c, rv: Reg);
-    jit_reexport!(retval_uc, rv: Reg);
-    jit_reexport!(retval_s, rv: Reg);
-    jit_reexport!(retval_us, rv: Reg);
-    jit_reexport!(retval_i, rv: Reg);
 
     pub fn get_note(
         &self,
@@ -274,50 +254,63 @@ impl<'a> JitState<'a> {
         }
     }
 
+    jit_reexport!(_jit_prepare, prepare);
+    jit_reexport!(_jit_pushargr, pushargr, arg: Reg);
+    jit_reexport!(_jit_pushargi, pushargi, arg: JitWord);
+    jit_reexport!(_jit_finishr, finishr, arg: Reg);
+    jit_reexport!(_jit_finishi, finishi, arg: JitPointer; -> JitNode);
+    jit_reexport!(_jit_ret, ret);
+    jit_reexport!(_jit_retr, retr, rv: Reg);
+    jit_reexport!(_jit_reti, reti, rv: JitWord);
+    jit_reexport!(_jit_retval_c, retval_c, rv: Reg);
+    jit_reexport!(_jit_retval_uc, retval_uc, rv: Reg);
+    jit_reexport!(_jit_retval_s, retval_s, rv: Reg);
+    jit_reexport!(_jit_retval_us, retval_us, rv: Reg);
+    jit_reexport!(_jit_retval_i, retval_i, rv: Reg);
     #[cfg(target_pointer_width = "64")]
-    jit_reexport!(retval_ui, rv: Reg);
+    jit_reexport!(_jit_retval_ui, retval_ui, rv: Reg);
     #[cfg(target_pointer_width = "64")]
-    jit_reexport!(retval_l, rv: Reg);
-    jit_reexport!(epilog);
+    jit_reexport!(_jit_retval_l, retval_l, rv: Reg);
+    jit_reexport!(_jit_epilog, epilog);
 
-    jit_reexport!(frame, size: i32);
-    jit_reexport!(tramp, fsize: i32);
+    jit_reexport!(_jit_frame, frame, size: i32);
+    jit_reexport!(_jit_tramp, tramp, fsize: i32);
 }
 
 /// implmentations of 32-bit float instructions
 impl<'a> JitState<'a> {
-    jit_reexport!(arg_f; -> JitNode);
-    jit_reexport!(getarg_f, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargr_f, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargi_f, imm: f32, arg: &JitNode);
+    jit_reexport!(_jit_arg_f, arg_f; -> JitNode);
+    jit_reexport!(_jit_getarg_f, getarg_f, reg: Reg, arg: &JitNode);
+    jit_reexport!(_jit_putargr_f, putargr_f, reg: Reg, arg: &JitNode);
+    jit_reexport!(_jit_putargi_f, putargi_f, imm: f32, arg: &JitNode);
 
     pub fn rsbr_f(&mut self, a: Reg, b: Reg, c: Reg) -> JitNode<'a> {
         self.subr_f(a, c, b)
     }
 
-    jit_reexport!(pushargr_f, reg: Reg);
-    jit_reexport!(pushargi_f, imm: f32);
-    jit_reexport!(retr_f, reg: Reg);
-    jit_reexport!(reti_f, imm: f32);
-    jit_reexport!(retval_f, reg: Reg);
+    jit_reexport!(_jit_pushargr_f, pushargr_f, reg: Reg);
+    jit_reexport!(_jit_pushargi_f, pushargi_f, imm: f32);
+    jit_reexport!(_jit_retr_f, retr_f, reg: Reg);
+    jit_reexport!(_jit_reti_f, reti_f, imm: f32);
+    jit_reexport!(_jit_retval_f, retval_f, reg: Reg);
 }
 
 /// implmentations of 64-bit float instructions
 impl<'a> JitState<'a> {
-    jit_reexport!(arg_d; -> JitNode);
-    jit_reexport!(getarg_d, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargr_d, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargi_d, imm: f64, arg: &JitNode);
+    jit_reexport!(_jit_arg_d, arg_d; -> JitNode);
+    jit_reexport!(_jit_getarg_d, getarg_d, reg: Reg, arg: &JitNode);
+    jit_reexport!(_jit_putargr_d, putargr_d, reg: Reg, arg: &JitNode);
+    jit_reexport!(_jit_putargi_d, putargi_d, imm: f64, arg: &JitNode);
 
     pub fn rsbr_d(&mut self, a: Reg, b: Reg, c: Reg) -> JitNode<'a> {
         self.subr_d(a, c, b)
     }
 
-    jit_reexport!(pushargr_d, reg: Reg);
-    jit_reexport!(pushargi_d, imm: f64);
-    jit_reexport!(retr_d, reg: Reg);
-    jit_reexport!(reti_d, imm: f64);
-    jit_reexport!(retval_d, reg: Reg);
+    jit_reexport!(_jit_pushargr_d, pushargr_d, reg: Reg);
+    jit_reexport!(_jit_pushargi_d, pushargi_d, imm: f64);
+    jit_reexport!(_jit_retr_d, retr_d, reg: Reg);
+    jit_reexport!(_jit_reti_d, reti_d, imm: f64);
+    jit_reexport!(_jit_retval_d, retval_d, reg: Reg);
 }
 
 macro_rules! private_make_func {
