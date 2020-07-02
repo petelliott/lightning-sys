@@ -177,18 +177,18 @@ impl<'a> JitState<'a> {
 
     jit_reexport!(emit; -> JitPointer);
 
-    jit_reexport!(address, node: &JitNode; -> JitPointer);
+    jit_reexport!(address, node: &JitNode<'a>; -> JitPointer);
 
-    jit_reexport!(forward_p, node: &JitNode; -> bool);
-    jit_reexport!(indirect_p, node: &JitNode; -> bool);
-    jit_reexport!(target_p, node: &JitNode; -> bool);
-    jit_reexport!(arg_register_p, node: &JitNode; -> bool);
+    jit_reexport!(forward_p, node: &JitNode<'a>; -> bool);
+    jit_reexport!(indirect_p, node: &JitNode<'a>; -> bool);
+    jit_reexport!(target_p, node: &JitNode<'a>; -> bool);
+    jit_reexport!(arg_register_p, node: &JitNode<'a>; -> bool);
     jit_reexport!(callee_save_p, reg: Reg; -> bool);
     jit_reexport!(pointer_p, ptr: JitPointer; -> bool);
 
-    jit_reexport!(patch, instr: &JitNode);
-    jit_reexport!(patch_at, instr: &JitNode, target: &JitNode);
-    jit_reexport!(patch_abs, instr: &JitNode, target: JitPointer);
+    jit_reexport!(patch, instr: &JitNode<'a>);
+    jit_reexport!(patch_at, instr: &JitNode<'a>, target: &JitNode<'a>);
+    jit_reexport!(patch_abs, instr: &JitNode<'a>, target: JitPointer);
     jit_reexport!(realize);
 
     // get_code needs argument mangling that jit_reexport currently does not
@@ -223,9 +223,9 @@ impl<'a> JitState<'a> {
 /// implementations of word-size-dependent aliases
 impl<'a> JitState<'a> {
     #[cfg(target_pointer_width = "64")]
-    jit_alias!(getarg_l => getarg, reg: Reg, node: &JitNode);
+    jit_alias!(getarg_l => getarg, reg: Reg, node: &JitNode<'a>);
     #[cfg(target_pointer_width = "32")]
-    jit_alias!(getarg_i => getarg, reg: Reg, node: &JitNode);
+    jit_alias!(getarg_i => getarg, reg: Reg, node: &JitNode<'a>);
 
     #[cfg(target_pointer_width = "32")]
     jit_alias!(ldr_i => ldr, targ: Reg, src: Reg; -> JitNode);
@@ -309,7 +309,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(label; -> JitNode);
     jit_reexport!(forward; -> JitNode);
     jit_reexport!(indirect; -> JitNode);
-    jit_reexport!(link, node: &JitNode);
+    jit_reexport!(link, node: &JitNode<'a>);
 
     jit_reexport!(prolog);
     jit_reexport!(ellipsis);
@@ -319,18 +319,18 @@ impl<'a> JitState<'a> {
 
     jit_reexport!(arg; -> JitNode);
 
-    jit_reexport!(getarg_c, reg: Reg, node: &JitNode);
-    jit_reexport!(getarg_uc, reg: Reg, node: &JitNode);
-    jit_reexport!(getarg_s, reg: Reg, node: &JitNode);
-    jit_reexport!(getarg_us, reg: Reg, node: &JitNode);
-    jit_reexport!(getarg_i, reg: Reg, node: &JitNode);
+    jit_reexport!(getarg_c, reg: Reg, node: &JitNode<'a>);
+    jit_reexport!(getarg_uc, reg: Reg, node: &JitNode<'a>);
+    jit_reexport!(getarg_s, reg: Reg, node: &JitNode<'a>);
+    jit_reexport!(getarg_us, reg: Reg, node: &JitNode<'a>);
+    jit_reexport!(getarg_i, reg: Reg, node: &JitNode<'a>);
     #[cfg(target_pointer_width = "64")]
-    jit_reexport!(getarg_ui, reg: Reg, node: &JitNode);
+    jit_reexport!(getarg_ui, reg: Reg, node: &JitNode<'a>);
     #[cfg(target_pointer_width = "64")]
-    jit_reexport!(getarg_l, reg: Reg, node: &JitNode);
+    jit_reexport!(getarg_l, reg: Reg, node: &JitNode<'a>);
 
-    jit_reexport!(putargr, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargi, imm: JitWord, arg: &JitNode);
+    jit_reexport!(putargr, reg: Reg, arg: &JitNode<'a>);
+    jit_reexport!(putargi, imm: JitWord, arg: &JitNode<'a>);
 
     jit_impl!(va_start, w);
     jit_impl!(va_arg, ww);
@@ -599,9 +599,9 @@ impl<'a> JitState<'a> {
 /// implmentations of 32-bit float instructions
 impl<'a> JitState<'a> {
     jit_reexport!(arg_f; -> JitNode);
-    jit_reexport!(getarg_f, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargr_f, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargi_f, imm: f32, arg: &JitNode);
+    jit_reexport!(getarg_f, reg: Reg, arg: &JitNode<'a>);
+    jit_reexport!(putargr_f, reg: Reg, arg: &JitNode<'a>);
+    jit_reexport!(putargi_f, imm: f32, arg: &JitNode<'a>);
 
     jit_impl!(addr_f, www);
     jit_impl!(addi_f, i_wwf);
@@ -708,9 +708,9 @@ impl<'a> JitState<'a> {
 /// implmentations of 64-bit float instructions
 impl<'a> JitState<'a> {
     jit_reexport!(arg_d; -> JitNode);
-    jit_reexport!(getarg_d, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargr_d, reg: Reg, arg: &JitNode);
-    jit_reexport!(putargi_d, imm: f64, arg: &JitNode);
+    jit_reexport!(getarg_d, reg: Reg, arg: &JitNode<'a>);
+    jit_reexport!(putargr_d, reg: Reg, arg: &JitNode<'a>);
+    jit_reexport!(putargi_d, imm: f64, arg: &JitNode<'a>);
 
     jit_impl!(addr_d, www);
     jit_impl!(addi_d, i_wwd);
