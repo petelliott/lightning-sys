@@ -1,6 +1,6 @@
+extern crate attohttpc;
 extern crate bindgen;
 extern crate flate2;
-extern crate reqwest;
 extern crate tar;
 
 use flate2::read::GzDecoder;
@@ -13,7 +13,7 @@ use tar::Archive;
 fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
     let release = include_str!("release");
     let target = format!("http://ftp.gnu.org/gnu/lightning/{}.tar.gz", release);
-    unpack(reqwest::blocking::get(&target)?, prefix)?;
+    unpack(attohttpc::get(&target).send()?.split().2, prefix)?;
 
     let cflags = cc::Build::new().get_compiler().cflags_env();
     let flags = vec![
