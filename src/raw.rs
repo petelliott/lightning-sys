@@ -196,12 +196,14 @@ macro_rules! make_func {
 }
 
 /// Defines an associated function for `JitState` for each `jit_entry`.
-macro_rules! jit_entry {
-    (   $entry:ident( $enum_in:ident $(, $inarg:ident )* )
-          => $root:ident
-          => [ new_node $( , $suffix:ident )* ]
-          => $invokes:ident( $jit:ident $( , $outarg:ident )* )
-    ) => {
+macro_rules! jit_filtered {
+    {
+        $caller:tt
+        decl = [{ $entry:ident( $enum_in:ident $(, $inarg:ident )* ) }]
+        root = [{ $root:ident }]
+        parts = [{ new_node $( $suffix:ident )* }]
+        invokes = [{ $invokes:ident( $jit:ident $( , $outarg:ident )* ) }]
+    } => {
         tt_call! {
             macro = [{ jit_signature }]
             suffix = [{ $entry }]
@@ -219,11 +221,13 @@ macro_rules! jit_entry {
             }
         }
     };
-    (   $entry:ident( $( $inarg:ident ),* )
-          => $root:ident
-          => [ $stem:ident $( , $suffix:ident )* ]
-          => $invokes:ident( $enum:ident, NULL $(, $outarg:ident )* )
-    ) => {
+    {
+        $caller:tt
+        decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+        root = [{ $root:ident }]
+        parts = [{ $stem:ident $( $suffix:ident )* }]
+        invokes = [{ $invokes:ident( $enum:ident, NULL $(, $outarg:ident )* ) }]
+    } => {
         tt_call! {
             macro = [{ jit_signature }]
             suffix = [{ $invokes }]
@@ -237,11 +241,13 @@ macro_rules! jit_entry {
             }
         }
     };
-    (   $entry:ident( $( $inarg:ident ),* )
-          => $root:ident
-          => [ $stem:ident $( , $suffix:ident )* ]
-          => $invokes:ident( $enum:ident $( , $outarg:ident )* )
-    ) => {
+    {
+        $caller:tt
+        decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+        root = [{ $root:ident }]
+        parts = [{ $stem:ident $( $suffix:ident )* }]
+        invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
+    } => {
         tt_call! {
             macro = [{ jit_signature }]
             suffix = [{ $invokes }]
@@ -252,6 +258,22 @@ macro_rules! jit_entry {
                 parmhead = [{ &mut self, }]
                 parmnames = [{ $( $inarg ),* }]
             }
+        }
+    };
+}
+
+macro_rules! jit_entry {
+    {   $entry:ident $inargs:tt
+            => $root:ident
+            => [ $( $parts:ident ),* ]
+            => $invokes:ident $outargs:tt
+    } => {
+        tt_call! {
+            macro = [{ jit_filtered }]
+            decl = [{ $entry $inargs }]
+            root = [{ $root }]
+            parts = [{ $( $parts )* }]
+            invokes = [{ $invokes $outargs }]
         }
     };
 }
@@ -282,19 +304,23 @@ fn trivial_invocation() {
 
     impl MyDefault for jit_pointer_t { fn default() -> Self { crate::types::NULL } }
 
-    macro_rules! jit_entry {
-        (   $entry:ident( $enum_in:ident $(, $inarg:ident )* )
-              => $root:ident
-              => [ new_node $( , $suffix:ident )* ]
-              => $invokes:ident( $jit:ident $( , $outarg:ident )* )
-        ) => {
+    macro_rules! jit_filtered {
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $enum_in:ident $(, $inarg:ident )* ) }]
+            root = [{ $root:ident }]
+            parts = [{ new_node $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
+        } => {
             /* skip */
         };
-        (   $entry:ident( $( $inarg:ident ),* )
-              => $root:ident
-              => [ $stem:ident $( , $suffix:ident )* ]
-              => $invokes:ident( $enum:ident $( , $outarg:ident )* )
-        ) => {
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
+        } => {
             {
                 $( let $inarg = MyDefault::default(); )*
                 let _ = $crate::Jit::new().new_state().$entry( $( $inarg ),* );

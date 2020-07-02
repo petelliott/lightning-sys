@@ -403,16 +403,18 @@ macro_rules! jit_inner {
     ( $( $any:tt )* ) => { compile_error!{ "Unrecognized jit_entry -- check formatting of generated macros" } };
 }
 
-macro_rules! jit_entry {
-    (   $entry:ident( $( $inarg:ident ),* )
-          => $root:ident
-          => [ $stem:ident $( , $suffix:ident )* ]
-          => $invokes:ident( $enum:ident $( , $outarg:ident )* )
-    ) => {
+macro_rules! jit_filtered {
+    {
+        $caller:tt
+        decl = [{ $entry:ident $inargs:tt }]
+        root = [{ $root:ident }]
+        parts = [{ $( $parts:ident )* }]
+        invokes = [{ $invokes:ident $outargs:tt }]
+    } => {
         jit_inner!{
-            ( $entry ( $( $inarg ),* ) $root )
-              [ $stem $( , $suffix )* ]
-              => $invokes( $enum $( , $outarg )* )
+            ( $entry $inargs $root )
+              [ $( $parts ),* ]
+              => $invokes $outargs
         }
     };
 }
