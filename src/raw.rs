@@ -286,6 +286,12 @@ macro_rules! jit_filtered {
     };
 }
 
+macro_rules! jit_entry_non_node {
+    { $( $tokens:tt )* } => {
+        // Ignore these for now.
+    };
+}
+
 macro_rules! jit_entry {
     {   $entry:ident $inargs:tt
             => $root:ident
@@ -318,10 +324,29 @@ macro_rules! jit_entry {
                         }
                     }]
                     false = [{
-                        /* ignored for now */
+                        tt_call! {
+                            macro = [{ jit_entry_non_node }]
+                            decl = [{ $entry $inargs }]
+                            root = [{ $root }]
+                            parts = [{ $( $parts )* }]
+                            invokes = [{ $invokes $outargs }]
+                        }
                     }]
                 }
             }]
+        }
+    };
+    {   $entry:ident $inargs:tt
+            => $root:ident
+            => [ $( $parts:ident ),* ]
+            => $( $other:tt )*
+    } => {
+        tt_call! {
+            macro = [{ jit_entry_non_node }]
+            decl = [{ $entry $inargs }]
+            root = [{ $root }]
+            parts = [{ $( $parts )* }]
+            invokes = [{ $( $other )* }]
         }
     };
 }
