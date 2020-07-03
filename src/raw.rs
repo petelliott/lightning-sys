@@ -292,12 +292,36 @@ macro_rules! jit_entry {
             => [ $( $parts:ident ),* ]
             => $invokes:ident $outargs:tt
     } => {
-        tt_call! {
-            macro = [{ jit_filtered }]
-            decl = [{ $entry $inargs }]
-            root = [{ $root }]
-            parts = [{ $( $parts )* }]
-            invokes = [{ $invokes $outargs }]
+        tt_if! {
+            condition = [{ is_new_node_func }]
+            input = [{ $invokes }]
+            true = [{
+                tt_call! {
+                    macro = [{ jit_filtered }]
+                    decl = [{ $entry $inargs }]
+                    root = [{ $root }]
+                    parts = [{ $( $parts )* }]
+                    invokes = [{ $invokes $outargs }]
+                }
+            }]
+            false = [{
+                tt_if! {
+                    condition = [{ is_new_node_func }]
+                    input = [{ $entry }]
+                    true = [{
+                        tt_call! {
+                            macro = [{ jit_filtered }]
+                            decl = [{ $entry $inargs }]
+                            root = [{ $root }]
+                            parts = [{ $( $parts )* }]
+                            invokes = [{ $invokes $outargs }]
+                        }
+                    }]
+                    false = [{
+                        /* ignored for now */
+                    }]
+                }
+            }]
         }
     };
 }
