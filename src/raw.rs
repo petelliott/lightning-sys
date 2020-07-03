@@ -66,6 +66,30 @@ macro_rules! jit_signature {
     { $c:tt suffix = [{ jit_new_node_www }] } => { tt_return!{ $c parmtypes = [{ jit_word_t, jit_word_t, jit_word_t               }] } };
 }
 
+macro_rules! is_new_node_func {
+    { $caller:tt input = [{ jit_new_node     }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_d   }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_dp  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_f   }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_fp  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_p   }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_pw  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_pwd }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_pwf }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_pww }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_qww }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_w   }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_wd  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_wf  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_wp  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_ww  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_wwd }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_wwf }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_www }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+
+    { $caller:tt input = [{ $( $any:tt )*    }] } => { tt_return!{ $caller is_new_node_func = [{ false }] } };
+}
+
 /// Calls `zip_params` after dropping zero or more tokens from each list.
 /// <sup>**[tt-call]**</sup>
 ///
