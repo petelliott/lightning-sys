@@ -94,12 +94,13 @@ impl bindgen::callbacks::ParseCallbacks for Callbacks {
     }
 }
 
-fn generate(pairs: impl IntoIterator<Item=(String,String)>)
-    -> impl IntoIterator<Item=String>
-{
-    let pairs: BTreeMap<_,_> = pairs.into_iter().collect();
+/// Separates a string into its constituent parts by iteratively removing known
+/// suffixes from the end of the input string.
+// This function is not particularly efficient, and might be reworked.
+fn chop_suffixes(orig: &str) -> Vec<String> {
+    let mut pieces = Vec::new();
 
-    let suffixes = vec![
+    const SUFFIXES: &[&str] = &[
         "_f", "_d",
         "_u",
         "_c", "_i", "_l", "_s",
@@ -108,29 +109,30 @@ fn generate(pairs: impl IntoIterator<Item=(String,String)>)
         "_w", "_wd", "_wf", "_wp", "_ww", "_wwd", "_wwf", "_www",
     ];
 
-    // This closure is not particularly efficient, and might be reworked.
-    let chop_suffixes = |orig: &str| {
-        let mut pieces = Vec::new();
-
-        let mut start = orig;
-        loop {
-            let mut truncated = start;
-            for suff in &suffixes {
-                if truncated.ends_with(suff) {
-                    let idx = truncated.len() - suff.len();
-                    pieces.push((*suff).to_owned());
-                    truncated = &truncated[..idx];
-                }
+    let mut start = orig;
+    loop {
+        let mut truncated = start;
+        for suff in SUFFIXES {
+            if truncated.ends_with(suff) {
+                let idx = truncated.len() - suff.len();
+                pieces.push((*suff).to_owned());
+                truncated = &truncated[..idx];
             }
-
-            if truncated.len() == start.len() {
-                pieces.push(truncated.to_string());
-                pieces.reverse();
-                break pieces;
-            }
-            start = truncated;
         }
-    };
+
+        if truncated.len() == start.len() {
+            pieces.push(truncated.to_string());
+            pieces.reverse();
+            break pieces;
+        }
+        start = truncated;
+    }
+}
+
+fn generate(pairs: impl IntoIterator<Item=(String,String)>)
+    -> impl IntoIterator<Item=String>
+{
+    let pairs: BTreeMap<_,_> = pairs.into_iter().collect();
 
     let stems: BTreeSet<_> =
         pairs
