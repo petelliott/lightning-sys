@@ -23,7 +23,7 @@ fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
     let cflags = cc::Build::new().get_compiler().cflags_env();
     let flags = vec![
             ("CFLAGS", cflags.clone()),
-            ("LDFLAGS", cflags.clone()),
+            ("LDFLAGS", cflags),
         ];
 
     let run =
@@ -86,7 +86,7 @@ impl Callbacks {
 
 impl bindgen::callbacks::ParseCallbacks for Callbacks {
     fn func_macro(&self, name: &str, value: &[&[u8]]) {
-        self.state.borrow_mut().insert(name.to_owned(), value.join(" ".as_bytes()));
+        self.state.borrow_mut().insert(name.to_owned(), value.join(b" " as &[u8]));
     }
 
     fn include_file(&self, filename: &str) {
