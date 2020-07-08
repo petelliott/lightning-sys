@@ -68,7 +68,8 @@ fn main() {
     println!("cargo:rustc-link-lib=static=lightning");
 
     let bindings = bindgen::Builder::default()
-        .header("wrapper.h")
+        .header(incdir.join("lightning.h").to_str().unwrap())
+        .header("C/lightning-sys.h")
         // Tell bindgen to regenerate bindings if the wrapper.h's contents or transitively
         // included files change.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
