@@ -9,6 +9,7 @@ arch:
 
 rust:
   - stable
+  - 1.39.0
   - beta
   - nightly
 
