@@ -6,9 +6,9 @@ extern crate tar;
 use flate2::read::GzDecoder;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 use std::env;
 use std::io::{Read, Write};
+use std::ops::Index;
 use std::panic::AssertUnwindSafe;
 use std::path::{PathBuf, Path};
 use std::process::Command;
@@ -94,67 +94,130 @@ impl bindgen::callbacks::ParseCallbacks for Callbacks {
     }
 }
 
-/// Separates a string into its constituent parts by iteratively removing known
-/// suffixes from the end of the input string.
-// This function is not particularly efficient, and might be reworked.
-fn chop_suffixes(orig: &str) -> Vec<String> {
-    let mut pieces = Vec::new();
+/// Separates a string into its constituent parts by removing known suffixes
+/// from the end of the input string.
+fn chop_suffixes(orig: &str) -> Vec<&str> {
+    const SPECIALS: &[&str] = &["new_node", "va_arg", "extr", "truncr"];
+    for &special in SPECIALS {
+        if orig.starts_with(special) {
+            if orig == special {
+                return vec![special];
+            } else {
+                return vec![special, &orig[special.len()..]];
+            }
+        }
+    }
+
+    let num_underscores = orig.matches('_').count();
+
+    // Handle special internal movs
+    if orig.starts_with("mov") && num_underscores > 1 {
+        // Accommodate the length of the initial "movr" or "movi".
+        // Treat multiple suffixes as one concatenated suffix in this case.
+        return vec![&orig[..4], &orig[4..]];
+    }
+
+    if num_underscores == 0 {
+        return vec![orig];
+    }
+
+    assert_eq!(num_underscores, 1);
 
     const SUFFIXES: &[&str] = &[
         "_f", "_d",
         "_u",
         "_c", "_i", "_l", "_s",
         "_uc", "_ui", "_ul", "_us",
-        "_dp", "_fp", "_p", "_pw", "_pwd", "_pwf", "_pww", "_qww",
-        "_w", "_wd", "_wf", "_wp", "_ww", "_wwd", "_wwf", "_www",
     ];
 
-    let mut start = orig;
-    loop {
-        let mut truncated = start;
-        for suff in SUFFIXES {
-            if truncated.ends_with(suff) {
-                let idx = truncated.len() - suff.len();
-                pieces.push((*suff).to_owned());
-                truncated = &truncated[..idx];
-            }
+    for &suff in SUFFIXES {
+        if orig.ends_with(suff) {
+            let (a, b) = orig.split_at(orig.len() - suff.len());
+            return vec![a, b];
         }
-
-        if truncated.len() == start.len() {
-            pieces.push(truncated.to_string());
-            pieces.reverse();
-            break pieces;
-        }
-        start = truncated;
     }
+
+    // Handle anomalies like va_end
+    vec![orig]
 }
 
-fn generate(pairs: impl IntoIterator<Item=(String,String)>)
-    -> impl IntoIterator<Item=String>
-{
-    let pairs: BTreeMap<_,_> = pairs.into_iter().collect();
+struct Record {
+    entry: String,
+    stem: String,
+    pieces: Vec<String>,
+    orig: String,
+}
 
-    let stems: BTreeSet<_> =
-        pairs
-            .keys()
+type Pieces<'a> = Vec<&'a Vec<&'a str>>;
+type VariantMap<'a> = BTreeMap<&'a str,Pieces<'a>>;
+type InverseVariantMap<'a> = BTreeMap<String,&'a str>;
+
+fn extract<'a>(
+    variants: &impl Index<&'a str,Output=Pieces<'a>>,
+    inverse_variants: &impl Index<&'a str,Output=&'a str>,
+    entry: &'a str,
+    orig: &'a str,
+) -> Record {
+    let brief = &entry[..entry.find('(').unwrap()];
+    let core = brief.trim_start_matches("jit_");
+    let iv = &inverse_variants[core];
+    let pieces =
+        std::iter::once(iv.clone())
+            .chain(
+                variants[iv].iter()
+                    .find(|e| core == e.concat())
+                    .unwrap()
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(idx, v)|
+                         if idx == 0 {
+                             let v = v.trim_start_matches(iv);
+                             if v.is_empty() { None } else { Some(v) }
+                         } else {
+                             Some(v)
+                         }
+                    )
+            )
+            .map(ToString::to_string)
+            .collect::<Vec<_>>();
+    let stem = core.to_string();
+    let entry = entry.to_string();
+    let orig = orig.to_string();
+    Record { entry, stem, pieces, orig }
+}
+
+fn make_stems<'a>(keys: impl Iterator<Item=&'a &'a str>) -> Vec<Vec<&'a str>> {
+    let mut out: Vec<_> =
+        keys
             .map(|e| e.split('(').next().unwrap())
             .map(|e| e.trim_start_matches("jit_"))
             .map(chop_suffixes)
             .collect();
+    out.sort_unstable();
+    out.dedup();
+    out
+}
 
-    let roots: BTreeSet<_> =
-        stems.iter()
-            .map(|e| e[0].clone())
+fn make_roots<'a>(stems: impl Iterator<Item=&'a Vec<&'a str>>) -> Vec<&'a str> {
+    let mut out: Vec<_> =
+        stems
             .map(|e|
-                 match e.as_bytes() {
-                     [r @ .., b'i'] | [r @ .., b'r'] => r.to_owned(),
-                     _ => e.into_bytes(),
-                 })
-            .map(String::from_utf8)
-            .map(Result::unwrap)
-            .collect()
-            ;
+                 if e[0].ends_with(|c| c == 'r' || c == 'i') {
+                     &e[0][..e[0].len()-1]
+                 } else {
+                     e[0]
+                 }
+            )
+            .collect();
+    out.sort_unstable();
+    out.dedup();
+    out
+}
 
+fn make_variant_maps<'a>(
+    roots: impl Iterator<Item=&'a str>,
+    stems: &'a [Vec<&'a str>],
+) -> (VariantMap<'a>, InverseVariantMap<'a>) {
     let kind_match = |needle: &str, haystack: &str| {
         let last_char = haystack.chars().last().unwrap();
         haystack.starts_with(needle)
@@ -162,58 +225,58 @@ fn generate(pairs: impl IntoIterator<Item=(String,String)>)
             && (haystack.len() == needle.len() || last_char == 'r' || last_char == 'i')
     };
     let variants: BTreeMap<_,Vec<_>> =
-        roots.iter()
+        roots
             .map(|r| (r,stems.iter().filter(|s| kind_match(r, &s[0])).collect()))
             .collect();
 
-    let inverse_variants: BTreeMap<String,String> =
-        variants.iter().fold(BTreeMap::new(), |mut iv, (k, v)| {
-            iv.extend(v.iter().map(|x| (x.concat(), (*k).to_string())));
+    let inverse_variants =
+        variants.iter().fold(BTreeMap::new(), |mut iv, (&k, v)| {
+            iv.extend(v.iter().map(|x| (x.concat(), k)));
             iv
         });
 
-    let collected: Vec<_> =
-        pairs.keys()
-            .map(|k| {
-                let brief = &k[..k.find('(').unwrap()];
-                let core = brief.trim_start_matches("jit_");
-                let iv = &inverse_variants[core];
-                let outs =
-                    std::iter::once(iv.clone())
-                        .chain(
-                            variants[&iv].iter()
-                                .find(|e| core == e.concat())
-                                .unwrap()
-                                .iter()
-                                .enumerate()
-                                .filter_map(|(idx, v)|
-                                     if idx == 0 {
-                                         let v = v.trim_start_matches(iv).to_string();
-                                         if v.is_empty() { None } else { Some(v) }
-                                     } else {
-                                         Some(v.clone())
-                                     }
-                                )
-                        )
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                        ;
-                let orig = pairs[k].clone();
-                (k, outs, orig, core)
+    (variants, inverse_variants)
+}
+
+fn parse_macros<'a>(pairs: &[(&'a str,&'a str)]) -> Vec<Record> {
+    let stems: Vec<_> = make_stems(pairs.iter().map(|(key, _value)| key)).into_iter().collect();
+
+    let roots = make_roots(stems.iter()).into_iter();
+
+    let (variants, inverse_variants) = make_variant_maps(roots, stems.as_slice());
+
+    pairs
+        .iter()
+        .map(|(k, v)| extract(&variants, &inverse_variants, k, &v))
+        .collect()
+}
+
+fn make_printable(collected: &[Record]) -> Vec<String> {
+    fn get_width(c: &[Record], closure: impl Fn(&Record) -> usize) -> usize {
+        c.iter().map(closure).max().unwrap_or(0)
+    }
+
+    let strings: Vec<_> =
+        collected
+            .iter()
+            .map(|Record { entry, stem, pieces, orig }| {
+                let pieces = pieces.join(", ");
+                 (entry, stem, pieces, orig)
             })
             .collect();
 
-        collected
-            .iter()
-            .map(|(k, pieces, orig, core)|
-                 format!(
-                    "jit_entry!{{ {k:w_k$} => {core:w_core$} => [ {pieces:w_pieces$} ] => {orig:w_orig$} }}",
-                    k     =k     , w_k     =collected.iter().map(|x| x.0.len()).max().unwrap_or(0),
-                    pieces=pieces, w_pieces=collected.iter().map(|x| x.1.len()).max().unwrap_or(0),
-                    orig  =orig  , w_orig  =collected.iter().map(|x| x.2.len()).max().unwrap_or(0),
-                    core  =core  , w_core  =collected.iter().map(|x| x.3.len()).max().unwrap_or(0),
-            ))
-            .collect::<Vec<_>>()
+    strings
+        .iter()
+        .map(|(entry, stem, pieces, orig)|
+             format!(
+                "jit_entry!{{ {entry:w_entry$} => {stem:w_stem$} => [ {pieces:w_pieces$} ] => {orig:w_orig$} }}",
+                entry =entry , w_entry =get_width(&collected, |Record { entry , .. }|  entry.len()),
+                stem  =stem  , w_stem  =get_width(&collected, |Record { stem  , .. }|   stem.len()),
+                pieces=pieces, w_pieces=strings.iter().map(|x| x.2.len()).max().unwrap_or(0),
+                orig  =orig  , w_orig  =get_width(&collected, |Record { orig  , .. }|   orig.len()),
+            )
+        )
+        .collect()
 }
 
 fn main() {
@@ -257,16 +320,17 @@ fn main() {
         .expect("Unable to generate bindings");
 
     let rc = rc.borrow();
-    let relevant =
+    let relevant: Vec<_> =
         rc
             .iter()
             .filter(|(key, _)| key.starts_with("jit_"))
             .map(|(key, value)| {
-                (key.to_owned(), String::from_utf8(value.to_owned()).unwrap())
+                (key.as_str(), std::str::from_utf8(value).unwrap())
             })
-            .filter(|(_, value)| value.contains("jit_new_node"));
+            .filter(|(_, value)| value.contains("jit_new_node"))
+            .collect();
 
-    let output = generate(relevant);
+    let output = make_printable(&parse_macros(&relevant));
     let mut file = std::fs::File::create(out_path.join("entries.rs")).unwrap();
     writeln!(file, "jit_entries!{{").unwrap();
     for line in output {
