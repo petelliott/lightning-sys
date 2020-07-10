@@ -8,22 +8,17 @@ arch:
   - amd64
 
 rust:
-  - nightly
-  - beta
   - stable
+  - beta
+  - nightly
 
 jobs:
   include:
-    - rust: stable
-      arch: arm64
-    - rust: stable
-      arch: s390x
-    - rust: stable
-      arch: ppc64le
-    - rust: stable
-      os: osx
-    - rust: stable
-      arch: amd64
+    - arch: arm64
+    - arch: s390x
+    - arch: ppc64le
+    - os: osx
+    - arch: amd64
       env: CARGO_BUILD_TARGET=i686-unknown-linux-gnu
       addons:
         apt:
