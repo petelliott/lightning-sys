@@ -186,6 +186,8 @@ fn extract<'a>(
     Record { entry, stem, pieces, orig }
 }
 
+/// Takes a list of macro left-hand-sides (like `["jit_stxr_i(u,v,w)"]`) and
+/// produces a deduplicated list of parsed pieces (like `[["stxr", "_i"]]`).
 fn make_stems<'a>(keys: impl Iterator<Item=&'a &'a str>) -> Vec<Vec<&'a str>> {
     let mut out: Vec<_> =
         keys
@@ -198,6 +200,8 @@ fn make_stems<'a>(keys: impl Iterator<Item=&'a &'a str>) -> Vec<Vec<&'a str>> {
     out
 }
 
+/// Takes a list like that produced by `make_stems` and produces a deduplicated
+/// list of cores (for example, `"stxr"` becomes `["stx", "r"]`).
 fn make_roots<'a>(stems: impl Iterator<Item=&'a Vec<&'a str>>) -> Vec<&'a str> {
     let mut out: Vec<_> =
         stems
@@ -238,6 +242,7 @@ fn make_variant_maps<'a>(
     (variants, inverse_variants)
 }
 
+/// Parses a list of macro definitions into a list of `Record`s.
 fn parse_macros<'a>(pairs: &[(&'a str,&'a str)]) -> Vec<Record> {
     let stems: Vec<_> = make_stems(pairs.iter().map(|(key, _value)| key)).into_iter().collect();
 
@@ -251,6 +256,8 @@ fn parse_macros<'a>(pairs: &[(&'a str,&'a str)]) -> Vec<Record> {
         .collect()
 }
 
+/// Takes a slice of `Record`s and generates `jit_entry!{}` macro invocations
+/// for them, with pretty-printing.
 fn make_printable(collected: &[Record]) -> Vec<String> {
     fn get_width(c: &[Record], closure: impl Fn(&Record) -> usize) -> usize {
         c.iter().map(closure).max().unwrap_or(0)
