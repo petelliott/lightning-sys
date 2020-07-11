@@ -6,6 +6,10 @@
 
 Safe gnu lightning bindings for rust
 
+## MSRV
+
+The minimum supported Rust version is **1.39**.
+
 ## Examples
 
 ### a function that increments a number by one
