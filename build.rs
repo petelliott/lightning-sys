@@ -256,31 +256,31 @@ fn parse_macros<'a>(pairs: &[(&'a str,&'a str)]) -> Vec<Record> {
         .collect()
 }
 
-/// Takes a slice of `Record`s and generates `jit_entry!{}` macro invocations
+/// Takes a `Vec` of `Record`s and generates `jit_entry!{}` macro invocations
 /// for them, with pretty-printing.
-fn make_printable(collected: &[Record]) -> Vec<String> {
-    fn get_width(c: &[Record], closure: impl Fn(&Record) -> usize) -> usize {
-        c.iter().map(closure).max().unwrap_or(0)
-    }
-
+fn make_printable(collected: Vec<Record>) -> Vec<String> {
     let strings: Vec<_> =
         collected
-            .iter()
+            .into_iter()
             .map(|Record { entry, stem, pieces, orig }| {
                 let pieces = pieces.join(", ");
-                 (entry, stem, pieces, orig)
+                (entry, stem, pieces, orig)
             })
             .collect();
+
+    type Sizer = dyn Fn(&(String, String, String, String)) -> usize;
+    let get_width = |closure: &Sizer|
+        strings.iter().map(closure).max().unwrap_or(0);
 
     strings
         .iter()
         .map(|(entry, stem, pieces, orig)|
              format!(
                 "jit_entry!{{ {entry:w_entry$} => {stem:w_stem$} => [ {pieces:w_pieces$} ] => {orig:w_orig$} }}",
-                entry =entry , w_entry =get_width(&collected, |Record { entry , .. }|  entry.len()),
-                stem  =stem  , w_stem  =get_width(&collected, |Record { stem  , .. }|   stem.len()),
-                pieces=pieces, w_pieces=strings.iter().map(|x| x.2.len()).max().unwrap_or(0),
-                orig  =orig  , w_orig  =get_width(&collected, |Record { orig  , .. }|   orig.len()),
+                entry =entry , w_entry =get_width(&|x| x.0.len()),
+                stem  =stem  , w_stem  =get_width(&|x| x.1.len()),
+                pieces=pieces, w_pieces=get_width(&|x| x.2.len()),
+                orig  =orig  , w_orig  =get_width(&|x| x.3.len()),
             )
         )
         .collect()
@@ -337,7 +337,7 @@ fn main() {
             .filter(|(_, value)| value.contains("jit_new_node"))
             .collect();
 
-    let output = make_printable(&parse_macros(&relevant));
+    let output = make_printable(parse_macros(&relevant));
     let mut file = std::fs::File::create(out_path.join("entries.rs")).unwrap();
     writeln!(file, "jit_entries!{{").unwrap();
     for line in output {
