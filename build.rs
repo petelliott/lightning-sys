@@ -180,7 +180,9 @@ fn make_variant_maps<'a>(
 ) -> (VariantMap<'a>, InverseVariantMap<'a>) {
     let kind_match = |needle: &str, haystack: &str| {
         let last_char = haystack.chars().last().unwrap();
-        let last_matches = (last_char == 'r' || last_char == 'i') && !haystack.contains('_');
+        let last_matches = (last_char == 'r' || last_char == 'i')
+            && !haystack.contains('_')
+            && haystack.len() > 1;
         haystack.starts_with(needle)
             && (haystack.len() - needle.len() < 2)
             && (haystack.len() == needle.len() || last_matches)
