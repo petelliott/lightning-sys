@@ -412,8 +412,12 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxi_l, i_www);
     #[cfg(target_pointer_width = "32")]
     jit_alias!(ldxr_i => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(ldxi_i => ldxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
     #[cfg(target_pointer_width = "64")]
     jit_alias!(ldxr_l => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(ldxi_l => ldxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
 
     jit_store!(str_c, ww);
     jit_store!(sti_c, i_pw);
