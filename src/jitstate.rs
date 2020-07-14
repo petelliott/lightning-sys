@@ -290,6 +290,7 @@ impl<'a> JitState<'a> {
     jit_impl!(va_start, w);
     jit_impl!(va_arg, ww);
     jit_impl!(va_arg_d, ww);
+    jit_reexport!(va_push, arg: Reg);
     jit_impl!(va_end, w);
 
     jit_impl!(addr, www);
