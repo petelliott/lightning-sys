@@ -553,6 +553,25 @@ impl<'a> JitState<'a> {
     jit_reexport!(retval_s, rv: Reg);
     jit_reexport!(retval_us, rv: Reg);
     jit_reexport!(retval_i, rv: Reg);
+
+    pub fn get_note(
+        &self,
+        code: JitPointer,
+        name: Option<&mut * mut std::os::raw::c_char>,
+        file: Option<&mut * mut std::os::raw::c_char>,
+        lineno: Option<&mut bindings::jit_int32_t>,
+    ) -> bool {
+        unsafe {
+            bindings::_jit_get_note(
+                self.state,
+                code,
+                pointer_from(name),
+                pointer_from(file),
+                pointer_from(lineno),
+            ) != 0
+        }
+    }
+
     #[cfg(target_pointer_width = "64")]
     jit_reexport!(retval_ui, rv: Reg);
     #[cfg(target_pointer_width = "64")]
