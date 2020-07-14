@@ -854,6 +854,90 @@ fn trivial_invocation() {
         };
     }
 
+    macro_rules! jit_entry_non_node {
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ destroy_state }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $( $other:tt )* }]
+        } => {
+            // Ignore jit_destroy_state, since it gets turned into a Drop
+            // implementation and destroying before Drop seems problematic.
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ disassemble }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( _jit $( , $outarg:ident )* ) }]
+        } => {
+            // Allow disassembly to be configured out.
+            #[cfg(disassembly)]
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            {
+                if false {
+                    // We cannot yet actually invoke these, but at least we can
+                    // check that the functions exist and take the right number
+                    // of parameters.
+                    $( let $outarg = unimplemented!(); )*
+                    let _ = $crate::Jit::new().new_state().disassemble( $( $outarg ),* );
+                }
+            }
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( _jit $( , $outarg:ident )* ) }]
+        } => {
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            {
+                if false {
+                    // We cannot yet actually invoke these, but at least we can
+                    // check that the functions exist and take the right number
+                    // of parameters.
+                    $( let $outarg = unimplemented!(); )*
+                    let _ = $crate::Jit::new().new_state().$root( $( $outarg ),* );
+                }
+            }
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ jit_cpu $( $other:tt )* }]
+        } => {
+            // Ignore macros that expand to an expression referencing
+            // architecture-specific details.
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $other:tt }]
+        } => {
+            // For now, ignore macros that expand to an expression that is not a
+            // function call.
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $( $other:tt )+ }]
+        } => {
+            // We cannot yet actually invoke these, but at least we can check
+            // that the functions exist.
+            let _ = JitState::$root;
+        };
+    }
+
     macro_rules! jit_entries {
         ( $( $tokens:tt )* ) => {
             { $( $tokens )* }
