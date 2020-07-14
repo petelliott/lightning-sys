@@ -26,7 +26,7 @@ js.addi(Reg::R(0), Reg::R(0), 1);
 js.retr(Reg::R(0));
 
 let incr = unsafe { js.emit::<extern fn(JitWord) -> JitWord>() };
-js.clear();
+js.clear_state();
 
 assert_eq!(incr(5), 6);
 assert_eq!(incr(6), 7);
@@ -64,7 +64,7 @@ fn main() {
     let my_function = unsafe{ js.emit::<extern fn(JitWord)>() };
     /* call the generated code, passing its size as argument */
     my_function((js.address(&end) as u64 - js.address(&start) as u64).try_into().unwrap());
-    js.clear();
+    js.clear_state();
 
     // TODO: dissasembly has not been implemented yet
     // js.dissasemble();
@@ -107,7 +107,7 @@ fn main() {
                 js.epilog();
 
     let fib = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
-    js.clear();
+    js.clear_state();
 
     println!("fib({})={}", 32, fib(32));
     assert_eq!(0, fib(0));
@@ -159,7 +159,7 @@ fn main() {
                 js.retr(Reg::R(0));
 
     let factorial = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
-    js.clear();
+    js.clear_state();
 
     println!("factorial({}) = {}", 5, factorial(5));
 }

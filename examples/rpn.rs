@@ -80,7 +80,7 @@ fn main() {
     let c2f = unsafe { to_func::<_, c_int>(c2f) };
     let f2c = js.address(&nf);
     let f2c = unsafe { to_func::<_, c_int>(f2c) };
-    js.clear();
+    js.clear_state();
 
     print!("\nC:");
     for i in 0..=10 { print!("{:3} ", i * 10); }

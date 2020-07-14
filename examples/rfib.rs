@@ -39,7 +39,7 @@ fn main() {
                 js.retr(JIT_R0);
 
     let fib = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
-    js.clear();
+    js.clear_state();
 
     println!("fib({}) = {}", 32, fib(32));
 }

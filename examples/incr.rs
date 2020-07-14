@@ -16,7 +16,7 @@ fn main() {
     js.retr(JIT_R0);
 
     let incr = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
-    js.clear();
+    js.clear_state();
 
     /* call the generated code, passing 5 as an argument */
     println!("{} + 1 = {}", 5, incr(5));

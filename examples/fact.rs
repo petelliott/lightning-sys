@@ -49,7 +49,7 @@ fn main() {
 
     let factorial = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
     /* no need to query information about resolved addresses */
-    js.clear();
+    js.clear_state();
 
     let arg = std::env::args().nth(1).map(|x| x.parse().unwrap_or(0)).unwrap_or(5);
 

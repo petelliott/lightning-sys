@@ -164,7 +164,7 @@ macro_rules! jit_alias {
 
 /// `JitState` utility methods
 impl<'a> JitState<'a> {
-    pub fn clear(&mut self) {
+    pub fn clear_state(&mut self) {
         unsafe {
             bindings::_jit_clear_state(self.state);
         }
