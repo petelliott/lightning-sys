@@ -70,7 +70,7 @@ fn main() {
     let nc = compile_rpn(&mut js, "32x9*5/+");
     let nf = compile_rpn(&mut js, "x32-5*9/");
 
-    let _ = js.raw_emit();
+    let _ = js.emit();
 
     unsafe fn to_func<T,R>(ptr: JitPointer) -> extern "C" fn(T) -> R {
         *(&ptr as *const *mut core::ffi::c_void as *const extern "C" fn(T) -> R)

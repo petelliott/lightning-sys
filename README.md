@@ -25,7 +25,7 @@ js.getarg(Reg::R(0), &inarg);
 js.addi(Reg::R(0), Reg::R(0), 1);
 js.retr(Reg::R(0));
 
-let incr = unsafe { js.emit::<extern fn(JitWord) -> JitWord>() };
+let incr = unsafe { js.cast_emit::<extern fn(JitWord) -> JitWord>() };
 js.clear_state();
 
 assert_eq!(incr(5), 6);
@@ -61,7 +61,7 @@ fn main() {
     js.epilog();
     let end = js.note(file!(), line!());
 
-    let my_function = unsafe{ js.emit::<extern fn(JitWord)>() };
+    let my_function = unsafe{ js.cast_emit::<extern fn(JitWord)>() };
     /* call the generated code, passing its size as argument */
     my_function((js.address(&end) as u64 - js.address(&start) as u64).try_into().unwrap());
     js.clear_state();
@@ -106,7 +106,7 @@ fn main() {
                 js.retr(Reg::R(0));
                 js.epilog();
 
-    let fib = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
+    let fib = unsafe{ js.cast_emit::<extern fn(JitWord) -> JitWord>() };
     js.clear_state();
 
     println!("fib({})={}", 32, fib(32));
@@ -158,7 +158,7 @@ fn main() {
                 js.patch(&f_out);
                 js.retr(Reg::R(0));
 
-    let factorial = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
+    let factorial = unsafe{ js.cast_emit::<extern fn(JitWord) -> JitWord>() };
     js.clear_state();
 
     println!("factorial({}) = {}", 5, factorial(5));

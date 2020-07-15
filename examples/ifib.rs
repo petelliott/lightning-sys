@@ -34,7 +34,7 @@ fn main() {
     js.patch(&zero);                                    /* patch forward jump */
                 js.retr     (JIT_R0);
 
-    let fib = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
+    let fib = unsafe{ js.cast_emit::<extern fn(JitWord) -> JitWord>() };
     js.clear_state();
 
     println!("fib({}) = {}", 36, fib(36));

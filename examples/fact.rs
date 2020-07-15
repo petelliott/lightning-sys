@@ -47,7 +47,7 @@ fn main() {
     js.patch(&fact_out);
     js.retr(JIT_R0);                    /* Return the accumulator */
 
-    let factorial = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
+    let factorial = unsafe{ js.cast_emit::<extern fn(JitWord) -> JitWord>() };
     /* no need to query information about resolved addresses */
     js.clear_state();
 
