@@ -10,11 +10,11 @@
 //! The Rust APIs provided here look like this:
 //! ```ignore
 //! impl<'j> JitState<'j> {
-//!     pub unsafe fn jit_absr_d(&mut self, u: jit_word_t, v: jit_word_t) -> JitNode<'j> {
+//!     pub(crate) unsafe fn jit_absr_d(&mut self, u: jit_word_t, v: jit_word_t) -> JitNode<'j> {
 //!         self.jit_new_node_ww(jit_code_t::jit_code_absr_d, u, v)
 //!     }
 //!
-//!     pub unsafe fn jit_new_node_ww(
+//!     pub(crate) unsafe fn jit_new_node_ww(
 //!         &mut self,
 //!         c: jit_code_t,
 //!         u: jit_word_t,
@@ -153,7 +153,7 @@ macro_rules! zip_params {
     };
 }
 
-/// Defines a `pub unsafe fn` with a given name, parameters, and body.
+/// Defines an `pub(crate) unsafe fn` with a given name, parameters, and body.
 /// <sup>**[tt-call]**</sup>
 macro_rules! private_make_func {
     {
@@ -164,13 +164,14 @@ macro_rules! private_make_func {
         zipped = [{ $( $params:tt )* }]
     } => {
         #[allow(clippy::missing_safety_doc)]
-        pub unsafe fn $fname $( < $( $life ),+ > )? ( $( $parmhead )* $( $params )* ) -> $rettype {
+        #[allow(dead_code)] // Not all generated functions will be used.
+        pub(crate) unsafe fn $fname $( < $( $life ),+ > )? ( $( $parmhead )* $( $params )* ) -> $rettype {
             $( $body )*
         }
     };
 }
 
-/// Defines a `pub unsafe fn` with a given name, parameters, and body.
+/// Defines a `pub(crate) unsafe fn` with a given name, parameters, and body.
 /// <sup>**[tt-call]**</sup>
 macro_rules! make_func {
     {
