@@ -176,11 +176,7 @@ impl<'a> JitState<'a> {
         *(&self.emit() as *const *mut core::ffi::c_void as *const T)
     }
 
-    pub fn emit(&mut self) -> JitPointer {
-        unsafe {
-            bindings::_jit_emit(self.state)
-        }
-    }
+    jit_reexport!(emit; -> JitPointer);
 
     jit_reexport!(address, node: &JitNode; -> JitPointer);
 
