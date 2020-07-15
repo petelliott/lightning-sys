@@ -162,6 +162,11 @@ macro_rules! jit_alias {
     ( $targ:ident => $new:ident $(, $arg:ident : $typ:ty )*) => { jit_alias!($targ => $new $(, $arg : $typ)*; -> ()); }
 }
 
+/// Convert a nullable reference into the C type representing it.
+fn pointer_from<T>(p: Option<&mut T>) -> * mut T {
+    p.map(|x| x as _).unwrap_or(std::ptr::null_mut())
+}
+
 /// `JitState` utility methods
 impl<'a> JitState<'a> {
     pub fn clear(&mut self) {
@@ -196,7 +201,31 @@ impl<'a> JitState<'a> {
     jit_reexport!(patch_abs, instr: &JitNode, target: JitPointer);
     jit_reexport!(realize);
 
-    // TODO: alternate code and data buffers
+    // get_code needs argument mangling that jit_reexport currently does not
+    // provide
+    pub fn get_code(&self, code_size: Option<&mut JitWord>) -> JitPointer {
+        unsafe { bindings::_jit_get_code(self.state, pointer_from(code_size)) }
+    }
+
+    jit_reexport!(set_code, buf: JitPointer, size: JitWord; -> ());
+
+    // get_data needs argument mangling that jit_reexport currently does not
+    // provide
+    pub fn get_data(
+        &self,
+        data_size: Option<&mut JitWord>,
+        note_size: Option<&mut JitWord>
+    ) -> JitPointer {
+        unsafe {
+            bindings::_jit_get_data(
+                self.state,
+                pointer_from(data_size),
+                pointer_from(note_size),
+            )
+        }
+    }
+
+    jit_reexport!(set_data, buf: JitPointer, data_size: JitWord, flags: JitWord; -> ());
 
     jit_reexport!(print);
 }
@@ -261,6 +290,7 @@ impl<'a> JitState<'a> {
     jit_impl!(va_start, w);
     jit_impl!(va_arg, ww);
     jit_impl!(va_arg_d, ww);
+    jit_reexport!(va_push, arg: Reg);
     jit_impl!(va_end, w);
 
     jit_impl!(addr, www);
@@ -412,8 +442,12 @@ impl<'a> JitState<'a> {
     jit_impl!(ldxi_l, i_www);
     #[cfg(target_pointer_width = "32")]
     jit_alias!(ldxr_i => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(ldxi_i => ldxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
     #[cfg(target_pointer_width = "64")]
     jit_alias!(ldxr_l => ldxr, targ: Reg, a: Reg, b: Reg; -> JitNode);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(ldxi_l => ldxi, targ: Reg, src: Reg, off: JitWord; -> JitNode);
 
     jit_store!(str_c, ww);
     jit_store!(sti_c, i_pw);
@@ -520,6 +554,25 @@ impl<'a> JitState<'a> {
     jit_reexport!(retval_s, rv: Reg);
     jit_reexport!(retval_us, rv: Reg);
     jit_reexport!(retval_i, rv: Reg);
+
+    pub fn get_note(
+        &self,
+        code: JitPointer,
+        name: Option<&mut * mut std::os::raw::c_char>,
+        file: Option<&mut * mut std::os::raw::c_char>,
+        lineno: Option<&mut bindings::jit_int32_t>,
+    ) -> bool {
+        unsafe {
+            bindings::_jit_get_note(
+                self.state,
+                code,
+                pointer_from(name),
+                pointer_from(file),
+                pointer_from(lineno),
+            ) != 0
+        }
+    }
+
     #[cfg(target_pointer_width = "64")]
     jit_reexport!(retval_ui, rv: Reg);
     #[cfg(target_pointer_width = "64")]
