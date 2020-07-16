@@ -419,6 +419,8 @@ include!(concat!(env!("OUT_DIR"), "/entries.rs"));
 
 #[test]
 fn trivial_invocation() {
+    let mut entry_count = 0;
+
     trait MyDefault { fn default() -> Self; }
 
     impl MyDefault for f32        { fn default() -> Self { Default::default() } }
@@ -434,6 +436,7 @@ fn trivial_invocation() {
     macro_rules! mm {
         ( ( $entry:ident ( $( $inarg:ident ),* ) $root:ident ) => ( $( $types:ty ),* ) => ( $( $outarg:ident ),* ) ) => {
             {
+                entry_count += 1;
                 $( let $inarg = MyDefault::default(); )*
                 let _ = $crate::Jit::new().new_state().$root( $( $inarg ),* );
             }
@@ -458,6 +461,7 @@ fn trivial_invocation() {
             parts = [{ $stem:ident $( $suffix:ident )* }]
             invokes = [{ $invokes:ident( _jit $( , $outarg:ident )* ) }]
         } => {
+            entry_count += 1;
             // Allow disassembly to be configured out.
             #[cfg(disassembly)]
             #[allow(unreachable_code)]
@@ -479,6 +483,7 @@ fn trivial_invocation() {
             parts = [{ $stem:ident $( $suffix:ident )* }]
             invokes = [{ $invokes:ident( _jit $( , $outarg:ident )* ) }]
         } => {
+            entry_count += 1;
             #[allow(unreachable_code)]
             #[allow(unused_variables)]
             {
@@ -518,6 +523,7 @@ fn trivial_invocation() {
             parts = [{ $stem:ident $( $suffix:ident )* }]
             invokes = [{ $( $other:tt )+ }]
         } => {
+            entry_count += 1;
             // We cannot yet actually invoke these, but at least we can check
             // that the functions exist.
             let _ = JitState::$root;
@@ -531,5 +537,14 @@ fn trivial_invocation() {
     }
 
     include!{ concat!(env!("OUT_DIR"), "/entries.rs") }
+
+    // The exact number of entry points depends on things like the target
+    // architecture's word size, so we cannot robustly check for an exact
+    // number, but we can put some useful bounds on the number that allow us to
+    // catch egregious errors at least. We also do not necessarily want to break
+    // immediately when a new version of GNU lightning adds or removes a few
+    // entry points -- this is a sanity check only.
+    assert!(entry_count > 400, "not enough entry points were seen");
+    assert!(entry_count < 450, "too many entry points were seen");
 }
 
