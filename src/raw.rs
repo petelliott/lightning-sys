@@ -368,6 +368,7 @@ include!(concat!(env!("OUT_DIR"), "/entries.rs"));
 #[allow(unused_variables)]
 fn trivial_invocation() {
     let mut new_node_count = 0;
+    let mut entry_count = 0;
 
     trait MyDefault { fn default() -> Self; }
 
@@ -402,6 +403,7 @@ fn trivial_invocation() {
             invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
         } => {
             {
+                entry_count += 1;
                 $( let $inarg = MyDefault::default(); )*
                 let _ = $crate::Jit::new().new_state().$entry( $( $inarg ),* );
             }
@@ -417,5 +419,6 @@ fn trivial_invocation() {
     include!{ concat!(env!("OUT_DIR"), "/entries.rs") }
 
     assert_eq!(new_node_count, 19, "an unexpected number of jit_new_node* entry points were seen");
+    assert!(entry_count > 320, "an unexpected number of jit_new_node* callers were seen");
 }
 
