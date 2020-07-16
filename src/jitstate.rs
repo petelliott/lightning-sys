@@ -274,7 +274,7 @@ impl<'a> JitState<'a> {
     jit_alias!(truncr_d_l => truncr_d, int: Reg, float: Reg; -> JitNode<'a>);
 }
 
-/// implmentations of general instructions
+/// implementations of general instructions
 impl<'a> JitState<'a> {
     jit_impl!(live, w);
     jit_impl!(align, w);
@@ -591,7 +591,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(tramp, fsize: i32);
 }
 
-/// implmentations of 32-bit float instructions
+/// implementations of 32-bit float instructions
 impl<'a> JitState<'a> {
     jit_reexport!(arg_f; -> JitNode<'a>);
     jit_reexport!(getarg_f, reg: Reg, arg: &JitNode<'a>);
@@ -700,7 +700,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(retval_f, reg: Reg);
 }
 
-/// implmentations of 64-bit float instructions
+/// implementations of 64-bit float instructions
 impl<'a> JitState<'a> {
     jit_reexport!(arg_d; -> JitNode<'a>);
     jit_reexport!(getarg_d, reg: Reg, arg: &JitNode<'a>);
