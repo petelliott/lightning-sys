@@ -367,6 +367,8 @@ include!(concat!(env!("OUT_DIR"), "/entries.rs"));
 #[allow(unreachable_code)]
 #[allow(unused_variables)]
 fn trivial_invocation() {
+    let mut new_node_count = 0;
+
     trait MyDefault { fn default() -> Self; }
 
     impl MyDefault for jit_word_t    { fn default() -> Self { Default::default() } }
@@ -389,6 +391,7 @@ fn trivial_invocation() {
             parts = [{ new_node $( $suffix:ident )* }]
             invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
         } => {
+            new_node_count += 1;
             /* skip */
         };
         {
@@ -412,5 +415,7 @@ fn trivial_invocation() {
     }
 
     include!{ concat!(env!("OUT_DIR"), "/entries.rs") }
+
+    assert_eq!(new_node_count, 19, "an unexpected number of jit_new_node* entry points were seen");
 }
 
