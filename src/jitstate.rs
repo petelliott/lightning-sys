@@ -21,8 +21,8 @@ impl<'a> Drop for JitState<'a> {
 }
 
 macro_rules! jit_reexport {
-    ( $orig:ident, $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
-        pub fn $fn(&mut self $(, $arg: $typ )*) -> JitNode<'a> {
+    ( $orig:ident, $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode<$life:lifetime>) => {
+        pub fn $fn(&mut self $(, $arg: $typ )*) -> JitNode<$life> {
             JitNode{
                 node: unsafe { bindings::$orig(self.state $(, $arg.to_ffi())*) },
                 phantom: std::marker::PhantomData,
@@ -199,9 +199,9 @@ impl<'a> JitState<'a> {
         }
     }
 
-    jit_reexport!(_jit_label, label; -> JitNode);
-    jit_reexport!(_jit_forward, forward; -> JitNode);
-    jit_reexport!(_jit_indirect, indirect; -> JitNode);
+    jit_reexport!(_jit_label, label; -> JitNode<'a>);
+    jit_reexport!(_jit_forward, forward; -> JitNode<'a>);
+    jit_reexport!(_jit_indirect, indirect; -> JitNode<'a>);
     jit_reexport!(_jit_link, link, node: &JitNode<'a>);
 
     jit_reexport!(_jit_prolog, prolog);
@@ -210,7 +210,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_allocai, allocai, size: i32; -> i32);
     jit_reexport!(_jit_allocar, allocar, off: Reg, size: Reg);
 
-    jit_reexport!(_jit_arg, arg; -> JitNode);
+    jit_reexport!(_jit_arg, arg; -> JitNode<'a>);
 
     jit_reexport!(_jit_getarg_c, getarg_c, reg: Reg, node: &JitNode<'a>);
     jit_reexport!(_jit_getarg_uc, getarg_uc, reg: Reg, node: &JitNode<'a>);
@@ -253,7 +253,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_pushargr, pushargr, arg: Reg);
     jit_reexport!(_jit_pushargi, pushargi, arg: JitWord);
     jit_reexport!(_jit_finishr, finishr, arg: Reg);
-    jit_reexport!(_jit_finishi, finishi, arg: JitPointer; -> JitNode);
+    jit_reexport!(_jit_finishi, finishi, arg: JitPointer; -> JitNode<'a>);
     jit_reexport!(_jit_ret, ret);
     jit_reexport!(_jit_retr, retr, rv: Reg);
     jit_reexport!(_jit_reti, reti, rv: JitWord);
@@ -274,7 +274,7 @@ impl<'a> JitState<'a> {
 
 /// implmentations of 32-bit float instructions
 impl<'a> JitState<'a> {
-    jit_reexport!(_jit_arg_f, arg_f; -> JitNode);
+    jit_reexport!(_jit_arg_f, arg_f; -> JitNode<'a>);
     jit_reexport!(_jit_getarg_f, getarg_f, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(_jit_putargr_f, putargr_f, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(_jit_putargi_f, putargi_f, imm: f32, arg: &JitNode<'a>);
@@ -292,7 +292,7 @@ impl<'a> JitState<'a> {
 
 /// implmentations of 64-bit float instructions
 impl<'a> JitState<'a> {
-    jit_reexport!(_jit_arg_d, arg_d; -> JitNode);
+    jit_reexport!(_jit_arg_d, arg_d; -> JitNode<'a>);
     jit_reexport!(_jit_getarg_d, getarg_d, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(_jit_putargr_d, putargr_d, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(_jit_putargi_d, putargi_d, imm: f64, arg: &JitNode<'a>);
