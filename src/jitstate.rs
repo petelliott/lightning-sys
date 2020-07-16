@@ -174,7 +174,7 @@ impl<'a> JitState<'a> {
     jit_alias!(truncr_d_l => truncr_d, int: Reg, float: Reg; -> JitNode<'a>);
 }
 
-/// implmentations of general instructions
+/// implementations of general instructions
 impl<'a> JitState<'a> {
 
     pub fn name(&mut self, name: &str) -> JitNode<'a> {
@@ -272,7 +272,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_tramp, tramp, fsize: i32);
 }
 
-/// implmentations of 32-bit float instructions
+/// implementations of 32-bit float instructions
 impl<'a> JitState<'a> {
     jit_reexport!(_jit_arg_f, arg_f; -> JitNode<'a>);
     jit_reexport!(_jit_getarg_f, getarg_f, reg: Reg, arg: &JitNode<'a>);
@@ -290,7 +290,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_retval_f, retval_f, reg: Reg);
 }
 
-/// implmentations of 64-bit float instructions
+/// implementations of 64-bit float instructions
 impl<'a> JitState<'a> {
     jit_reexport!(_jit_arg_d, arg_d; -> JitNode<'a>);
     jit_reexport!(_jit_getarg_d, getarg_d, reg: Reg, arg: &JitNode<'a>);
