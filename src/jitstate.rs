@@ -95,9 +95,9 @@ macro_rules! jit_impl_inner {
 }
 
 macro_rules! jit_reexport {
-    ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode) => {
+    ( $fn:ident $(, $arg:ident : $typ:ty )*; -> JitNode<$life:lifetime>) => {
         paste::item! {
-            pub fn $fn(&mut self $(, $arg: $typ )*) -> JitNode<'a> {
+            pub fn $fn(&mut self $(, $arg: $typ )*) -> JitNode<$life> {
                 JitNode{
                     node: unsafe { bindings::[< _jit_ $fn >](self.state $(, $arg.to_ffi())*) },
                     phantom: std::marker::PhantomData,
@@ -301,9 +301,9 @@ impl<'a> JitState<'a> {
         }
     }
 
-    jit_reexport!(label; -> JitNode);
-    jit_reexport!(forward; -> JitNode);
-    jit_reexport!(indirect; -> JitNode);
+    jit_reexport!(label; -> JitNode<'a>);
+    jit_reexport!(forward; -> JitNode<'a>);
+    jit_reexport!(indirect; -> JitNode<'a>);
     jit_reexport!(link, node: &JitNode<'a>);
 
     jit_reexport!(prolog);
@@ -312,7 +312,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(allocai, size: i32; -> i32);
     jit_reexport!(allocar, off: Reg, size: Reg);
 
-    jit_reexport!(arg; -> JitNode);
+    jit_reexport!(arg; -> JitNode<'a>);
 
     jit_reexport!(getarg_c, reg: Reg, node: &JitNode<'a>);
     jit_reexport!(getarg_uc, reg: Reg, node: &JitNode<'a>);
@@ -422,18 +422,18 @@ impl<'a> JitState<'a> {
     jit_impl!(extr_ui, ww);
 
     jit_impl!(htonr_us, ww);
-    jit_alias!(htonr_us => ntohr_us, targ: Reg, src: Reg; -> JitNode);
+    jit_alias!(htonr_us => ntohr_us, targ: Reg, src: Reg; -> JitNode<'a>);
     jit_impl!(htonr_ui, ww);
-    jit_alias!(htonr_ui => ntohr_ui, targ: Reg, src: Reg; -> JitNode);
+    jit_alias!(htonr_ui => ntohr_ui, targ: Reg, src: Reg; -> JitNode<'a>);
     #[cfg(target_pointer_width = "64")]
     jit_impl!(htonr_ul, ww);
     #[cfg(target_pointer_width = "64")]
-    jit_alias!(htonr_ul => ntohr_ul, targ: Reg, src: Reg; -> JitNode);
+    jit_alias!(htonr_ul => ntohr_ul, targ: Reg, src: Reg; -> JitNode<'a>);
     #[cfg(target_pointer_width = "32")]
-    jit_alias!(htonr_ui => htonr, targ: Reg, src: Reg; -> JitNode);
+    jit_alias!(htonr_ui => htonr, targ: Reg, src: Reg; -> JitNode<'a>);
     #[cfg(target_pointer_width = "64")]
-    jit_alias!(htonr_ul => htonr, targ: Reg, src: Reg; -> JitNode);
-    jit_alias!(htonr => ntohr, targ: Reg, src: Reg; -> JitNode);
+    jit_alias!(htonr_ul => htonr, targ: Reg, src: Reg; -> JitNode<'a>);
+    jit_alias!(htonr => ntohr, targ: Reg, src: Reg; -> JitNode<'a>);
 
     jit_impl!(ldr_c, ww);
     jit_impl!(ldi_c, i_wp);
@@ -553,7 +553,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(pushargr, arg: Reg);
     jit_reexport!(pushargi, arg: JitWord);
     jit_reexport!(finishr, arg: Reg);
-    jit_reexport!(finishi, arg: JitPointer; -> JitNode);
+    jit_reexport!(finishi, arg: JitPointer; -> JitNode<'a>);
     jit_reexport!(ret);
     jit_reexport!(retr, rv: Reg);
     jit_reexport!(reti, rv: JitWord);
@@ -593,7 +593,7 @@ impl<'a> JitState<'a> {
 
 /// implmentations of 32-bit float instructions
 impl<'a> JitState<'a> {
-    jit_reexport!(arg_f; -> JitNode);
+    jit_reexport!(arg_f; -> JitNode<'a>);
     jit_reexport!(getarg_f, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(putargr_f, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(putargi_f, imm: f32, arg: &JitNode<'a>);
@@ -702,7 +702,7 @@ impl<'a> JitState<'a> {
 
 /// implmentations of 64-bit float instructions
 impl<'a> JitState<'a> {
-    jit_reexport!(arg_d; -> JitNode);
+    jit_reexport!(arg_d; -> JitNode<'a>);
     jit_reexport!(getarg_d, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(putargr_d, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(putargi_d, imm: f64, arg: &JitNode<'a>);
