@@ -115,7 +115,7 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_print, print);
 }
 
-/// implementations of word-size-dependent aliases
+/// implementations of word-size-dependent aliases and exports
 impl<'a> JitState<'a> {
     #[cfg(target_pointer_width = "64")]
     jit_alias!(getarg_l => getarg, reg: Reg, node: &JitNode<'a>);
@@ -172,6 +172,15 @@ impl<'a> JitState<'a> {
     jit_alias!(truncr_d_i => truncr_d, int: Reg, float: Reg; -> JitNode<'a>);
     #[cfg(target_pointer_width = "64")]
     jit_alias!(truncr_d_l => truncr_d, int: Reg, float: Reg; -> JitNode<'a>);
+
+    #[cfg(target_pointer_width = "64")]
+    jit_reexport!(_jit_getarg_ui, getarg_ui, reg: Reg, node: &JitNode<'a>);
+    #[cfg(target_pointer_width = "64")]
+    jit_reexport!(_jit_getarg_l, getarg_l, reg: Reg, node: &JitNode<'a>);
+    #[cfg(target_pointer_width = "64")]
+    jit_reexport!(_jit_retval_ui, retval_ui, rv: Reg);
+    #[cfg(target_pointer_width = "64")]
+    jit_reexport!(_jit_retval_l, retval_l, rv: Reg);
 }
 
 /// implementations of general instructions
@@ -217,10 +226,6 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_getarg_s, getarg_s, reg: Reg, node: &JitNode<'a>);
     jit_reexport!(_jit_getarg_us, getarg_us, reg: Reg, node: &JitNode<'a>);
     jit_reexport!(_jit_getarg_i, getarg_i, reg: Reg, node: &JitNode<'a>);
-    #[cfg(target_pointer_width = "64")]
-    jit_reexport!(_jit_getarg_ui, getarg_ui, reg: Reg, node: &JitNode<'a>);
-    #[cfg(target_pointer_width = "64")]
-    jit_reexport!(_jit_getarg_l, getarg_l, reg: Reg, node: &JitNode<'a>);
 
     jit_reexport!(_jit_putargr, putargr, reg: Reg, arg: &JitNode<'a>);
     jit_reexport!(_jit_putargi, putargi, imm: JitWord, arg: &JitNode<'a>);
@@ -262,10 +267,6 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_retval_s, retval_s, rv: Reg);
     jit_reexport!(_jit_retval_us, retval_us, rv: Reg);
     jit_reexport!(_jit_retval_i, retval_i, rv: Reg);
-    #[cfg(target_pointer_width = "64")]
-    jit_reexport!(_jit_retval_ui, retval_ui, rv: Reg);
-    #[cfg(target_pointer_width = "64")]
-    jit_reexport!(_jit_retval_l, retval_l, rv: Reg);
     jit_reexport!(_jit_epilog, epilog);
 
     jit_reexport!(_jit_frame, frame, size: i32);
