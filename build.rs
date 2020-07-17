@@ -1,58 +1,13 @@
-extern crate attohttpc;
 extern crate bindgen;
-extern crate flate2;
-extern crate tar;
 
-use flate2::read::GzDecoder;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::env;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::ops::Index;
 use std::panic::AssertUnwindSafe;
 use std::path::PathBuf;
-use std::process::Command;
 use std::rc::Rc;
-use tar::Archive;
-
-fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let release = include_str!("release");
-    let target = format!("http://ftp.gnu.org/gnu/lightning/{}.tar.gz", release);
-    unpack(attohttpc::get(&target).send()?.split().2, prefix)?;
-
-    let cflags = cc::Build::new().get_compiler().cflags_env();
-    let flags = vec![
-            ("CFLAGS", cflags.clone()),
-            ("LDFLAGS", cflags),
-        ];
-
-    let run =
-        Command::new("./build-lightning.sh")
-            .envs(flags)
-            .arg(prefix)
-            .arg(release)
-            .status();
-
-    match run {
-        Ok(x) if x.success() => Ok(()),
-        _ => Err(format!("failed to build {}", release).into()),
-    }
-}
-
-fn lightning_built(prefix: &Path) -> bool {
-    // Since a cross-platform name for the actual library file is hard to
-    // compute, just look for the "lib" directory, which implies that the
-    // `install` target succeeded.
-    prefix.join("lib").exists()
-}
-
-fn unpack<P: AsRef<Path>>(tgz: impl Read, outdir: P) -> Result<(), std::io::Error> {
-    let tar = GzDecoder::new(tgz);
-    let mut archive = Archive::new(tar);
-    archive.unpack(outdir)?;
-
-    Ok(())
-}
 
 // We need the interior mutability of `RefCell` to work around the fact that the
 // `func_macro` callback is not called with a `mut` reference. We need
@@ -296,10 +251,6 @@ fn main() -> std::io::Result<()> {
     let base = PathBuf::from("vendor/gnu-lightning");
     let incdir = base.join("include");
     let libdir = base.join("lib");
-
-    if !lightning_built(&prefix) {
-        build_lightning(prefix.to_str().unwrap()).unwrap();
-    }
 
     {
         let input = BufReader::new(File::open(incdir.join("lightning.h.in"))?);
