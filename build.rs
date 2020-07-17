@@ -286,7 +286,7 @@ fn make_printable(collected: Vec<Record>) -> Vec<String> {
         .collect()
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let prefix = out_path.join("lightning-prefix");
     let libdir = prefix.join("lib");
@@ -351,4 +351,6 @@ fn main() {
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+
+    Ok(())
 }
