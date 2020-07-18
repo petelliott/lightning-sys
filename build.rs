@@ -63,6 +63,8 @@ fn unpack<P: AsRef<Path>>(tgz: impl Read, outdir: P) -> Result<(), std::io::Erro
 type HideUnwinding<T> = Rc<AssertUnwindSafe<RefCell<T>>>;
 
 struct Callbacks {
+    /// CargoCallbacks tells bindgen to regenerate bindings if header files'
+    /// contents or transitively included files change.
     wrapped: bindgen::CargoCallbacks,
     state: HideUnwinding<BTreeMap<String, Vec<u8>>>,
 }
@@ -312,8 +314,6 @@ fn main() -> std::io::Result<()> {
     let bindings = bindgen::Builder::default()
         .header(incdir.join("lightning.h").to_str().unwrap())
         .header("C/lightning-sys.h")
-        // Tell bindgen to regenerate bindings if the wrapper.h's contents or transitively
-        // included files change.
         .parse_callbacks(Box::new(cb))
         .whitelist_function(".+_jit")
         .whitelist_function("_?jit_.*")
