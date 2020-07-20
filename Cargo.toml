@@ -16,7 +16,7 @@ tt-call = "1.0"
 
 [build-dependencies]
 attohttpc = { version = "0.15", default-features = false }
-bindgen = "0.54.1"
+bindgen = { version = "0.54.1", default-features = false, features = ["runtime"] }
 cc = "1.0"
 flate2 = "1.0"
 tar = "0.4"
