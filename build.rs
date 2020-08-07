@@ -1,58 +1,13 @@
-extern crate attohttpc;
 extern crate bindgen;
-extern crate flate2;
-extern crate tar;
 
-use flate2::read::GzDecoder;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::env;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::ops::Index;
 use std::panic::AssertUnwindSafe;
-use std::path::{PathBuf, Path};
-use std::process::Command;
+use std::path::PathBuf;
 use std::rc::Rc;
-use tar::Archive;
-
-fn build_lightning(prefix: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let release = include_str!("release");
-    let target = format!("http://ftp.gnu.org/gnu/lightning/{}.tar.gz", release);
-    unpack(attohttpc::get(&target).send()?.split().2, prefix)?;
-
-    let cflags = cc::Build::new().get_compiler().cflags_env();
-    let flags = vec![
-            ("CFLAGS", cflags.clone()),
-            ("LDFLAGS", cflags),
-        ];
-
-    let run =
-        Command::new("./build-lightning.sh")
-            .envs(flags)
-            .arg(prefix)
-            .arg(release)
-            .status();
-
-    match run {
-        Ok(x) if x.success() => Ok(()),
-        _ => Err(format!("failed to build {}", release).into()),
-    }
-}
-
-fn lightning_built(prefix: &Path) -> bool {
-    // Since a cross-platform name for the actual library file is hard to
-    // compute, just look for the "lib" directory, which implies that the
-    // `install` target succeeded.
-    prefix.join("lib").exists()
-}
-
-fn unpack<P: AsRef<Path>>(tgz: impl Read, outdir: P) -> Result<(), std::io::Error> {
-    let tar = GzDecoder::new(tgz);
-    let mut archive = Archive::new(tar);
-    archive.unpack(outdir)?;
-
-    Ok(())
-}
 
 // We need the interior mutability of `RefCell` to work around the fact that the
 // `func_macro` callback is not called with a `mut` reference. We need
@@ -63,6 +18,8 @@ fn unpack<P: AsRef<Path>>(tgz: impl Read, outdir: P) -> Result<(), std::io::Erro
 type HideUnwinding<T> = Rc<AssertUnwindSafe<RefCell<T>>>;
 
 struct Callbacks {
+    /// CargoCallbacks tells bindgen to regenerate bindings if header files'
+    /// contents or transitively included files change.
     wrapped: bindgen::CargoCallbacks,
     state: HideUnwinding<BTreeMap<String, Vec<u8>>>,
 }
@@ -286,23 +243,70 @@ fn make_printable(collected: Vec<Record>) -> Vec<String> {
         .collect()
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
+    use std::io::{BufRead, BufReader};
+    use std::fs::File;
+
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let prefix = out_path.join("lightning-prefix");
-    let libdir = prefix.join("lib");
-    let incdir = prefix.join("include");
+    let base = PathBuf::from("vendor/gnu-lightning");
+    let incdir = base.join("include");
+    let libdir = base.join("lib");
 
-    if !lightning_built(&prefix) {
-        build_lightning(prefix.to_str().unwrap()).unwrap();
+    {
+        let input = BufReader::new(File::open(incdir.join("lightning.h.in"))?);
+        let mut output = File::create(out_path.join("lightning.h"))?;
+        for line in input.lines() {
+            let line = line?;
+            match line.as_str() {
+                "@MAYBE_INCLUDE_STDINT_H@" => writeln!(output, "#include <stdint.h>")?,
+                _ if !line.contains('@') => writeln!(output, "{}", line)?,
+                _ => panic!("Found unexpected automake token in lightning header"),
+            }
+        }
     }
-    cc::Build::new()
+
+    let definitions = &[
+        // TODO make HAVE_FFSL dependent on target (it is in POSIX, but Windows
+        // might not have it)
+        ("HAVE_FFSL", None),
+        // TODO remove NDEBUG -- it works works around an invalid assertion
+        // (`assert(l != h)`) in _jit_new_node_qww
+        ("NDEBUG", None),
+    ];
+
+    let files = &[
+        libdir.join("jit_disasm.c"),
+        libdir.join("jit_memory.c"),
+        libdir.join("jit_names.c"),
+        libdir.join("jit_note.c"),
+        libdir.join("jit_print.c"),
+        libdir.join("jit_size.c"),
+        libdir.join("lightning.c"),
+    ];
+
+    let mut builder = cc::Build::new();
+
+    for &(name, val) in definitions {
+        builder.define(name, val);
+    }
+
+    for file in files {
+        builder.file(file);
+        // N.B.: This does not catch .c and .h files that are #include'd by the
+        // top-level files, but doing this is better than nothing.
+        println!("cargo:rerun-if-changed={}", file.to_str().unwrap());
+    }
+
+    println!("cargo:rerun-if-changed={}", "C/register.c");
+    println!("cargo:rerun-if-changed={}", "C/lightning-sys.h");
+
+    builder
         .include(incdir.clone())
+        .include(out_path.clone())
         .file("C/register.c")
+        .flag_if_supported("-Wno-unused")
+        .flag_if_supported("-Wno-unused-parameter")
         .compile("lightningsys");
-
-    println!("cargo:rustc-link-search=native={}", libdir.to_str().unwrap());
-
-    println!("cargo:rustc-link-lib=static=lightning");
 
     let bt = BTreeMap::new();
     let ce = AssertUnwindSafe(RefCell::new(bt));
@@ -310,10 +314,8 @@ fn main() {
     let cb = Callbacks::new(Rc::clone(&rc));
 
     let bindings = bindgen::Builder::default()
-        .header(incdir.join("lightning.h").to_str().unwrap())
+        .header(out_path.join("lightning.h").to_str().unwrap())
         .header("C/lightning-sys.h")
-        // Tell bindgen to regenerate bindings if the wrapper.h's contents or transitively
-        // included files change.
         .parse_callbacks(Box::new(cb))
         .whitelist_function(".+_jit")
         .whitelist_function("_?jit_.*")
@@ -351,4 +353,6 @@ fn main() {
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+
+    Ok(())
 }
