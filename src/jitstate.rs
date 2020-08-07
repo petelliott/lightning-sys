@@ -92,7 +92,7 @@ impl<'a> JitState<'a> {
         unsafe { bindings::_jit_get_code(self.state, pointer_from(code_size)) }
     }
 
-    jit_reexport!(_jit_set_code, set_code, buf: JitPointer, size: JitWord; -> ());
+    jit_reexport!(_jit_set_code, set_code, buf: JitPointer, size: JitWord);
 
     // get_data needs argument mangling that jit_reexport currently does not
     // provide
@@ -110,7 +110,7 @@ impl<'a> JitState<'a> {
         }
     }
 
-    jit_reexport!(_jit_set_data, set_data, buf: JitPointer, data_size: JitWord, flags: JitWord; -> ());
+    jit_reexport!(_jit_set_data, set_data, buf: JitPointer, data_size: JitWord, flags: JitWord);
 
     jit_reexport!(_jit_print, print);
 }
