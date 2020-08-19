@@ -5,6 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Introduced this Changelog
+- Set up CI builds for multiple major architectures and OSes (#15, #18, #27)
+- Introduced basic code coverage metrics with Tarpaulin and Codecov (#24)
+- Ported remaining examples from GNU lightning (#28, #31)
+- Laid groundwork for interface generation mechanization (#32)
+- Added some missing entry points (#34, #35, #37, #42)
+
+### Changed
+- Allow multiple `JitState`s to exist at once (#14)
+- Use GNU Lightning 2.1.3 (#19)
+- Switched back to static linking for liblightning (#23)
+- Set a Minimum Supported Rust Version (MSRV) of 1.39.0 (#41)
+- Switched back to a Git submodule for GNU lightning (#45)
+- Made various build and code quality improvements (#10, #11, #17, #20, #25, #26, #36, #40, #46)
+
+### Fixed
+- Corrected a register reference in Fibonacci example (#16)
+- Corrected lifetimes and made API semantically mutating (#30)
 
 ## [0.2.1] - 2020-05-08
 ### Added
