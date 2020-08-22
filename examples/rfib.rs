@@ -38,8 +38,8 @@ fn main() {
     js.patch(&zero);                                    /* patch jump */
                 js.retr(JIT_R0);
 
-    let fib = unsafe{ js.emit::<extern fn(JitWord) -> JitWord>() };
-    js.clear();
+    let fib = unsafe{ js.cast_emit::<extern fn(JitWord) -> JitWord>() };
+    js.clear_state();
 
     println!("fib({}) = {}", 32, fib(32));
 }

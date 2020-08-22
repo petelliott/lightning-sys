@@ -169,7 +169,7 @@ fn pointer_from<T>(p: Option<&mut T>) -> * mut T {
 
 /// `JitState` utility methods
 impl<'a> JitState<'a> {
-    pub fn clear(&mut self) {
+    pub fn clear_state(&mut self) {
         unsafe {
             bindings::_jit_clear_state(self.state);
         }
@@ -177,15 +177,11 @@ impl<'a> JitState<'a> {
 
     // there is no way to require a function type in a trait bound
     // without specifying the number of arguments
-    pub unsafe fn emit<T: Copy>(&mut self) -> T {
-        *(&bindings::_jit_emit(self.state) as *const *mut core::ffi::c_void as *const T)
+    pub unsafe fn cast_emit<T: Copy>(&mut self) -> T {
+        *(&self.emit() as *const *mut core::ffi::c_void as *const T)
     }
 
-    pub fn raw_emit(&mut self) -> JitPointer {
-        unsafe {
-            bindings::_jit_emit(self.state)
-        }
-    }
+    jit_reexport!(emit; -> JitPointer);
 
     jit_reexport!(address, node: &JitNode; -> JitPointer);
 

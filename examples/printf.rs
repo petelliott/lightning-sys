@@ -28,11 +28,11 @@ fn main() {
     js.epilog();
     let end = js.note(Some(file!()), line!());
 
-    let myFunction = unsafe{ js.emit::<extern fn(JitWord)>() };
+    let myFunction = unsafe{ js.cast_emit::<extern fn(JitWord)>() };
 
     /* call the generated code, passing its size as argument */
     myFunction((js.address(&end) as usize - js.address(&start) as usize).try_into().unwrap());
-    js.clear();
+    js.clear_state();
 
     // js.disassemble(); // TODO support disassembly
 }
