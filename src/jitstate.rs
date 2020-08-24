@@ -323,6 +323,8 @@ macro_rules! private_make_func {
     };
 }
 
+/// Provides a compact way to call a tt-call macro from a pattern matched from
+/// jit_entry.
 macro_rules! mm {
     ( ( $entry:ident ( $( $inarg:ident ),* ) $root:ident ) => ( $( $types:ty ),* ) => ( $( $outarg:ident ),* ) ) => {
         make_func! {
@@ -435,6 +437,8 @@ fn trivial_invocation() {
     impl MyDefault for Reg        { fn default() -> Self { Reg::R(0)          } }
     impl MyDefault for JitPointer { fn default() -> Self { crate::types::NULL } }
 
+    /// Calls the function represented by each `jit_entry` that corresponds to
+    /// a `jit_new_node_*` call.
     macro_rules! mm {
         ( ( $entry:ident ( $( $inarg:ident ),* ) $root:ident ) => ( $( $types:ty ),* ) => ( $( $outarg:ident ),* ) ) => {
             {
@@ -445,6 +449,8 @@ fn trivial_invocation() {
         };
     }
 
+    /// Calls the function represented by each `jit_entry` that does *not*
+    /// correspond to a `jit_new_node_*` call.
     macro_rules! jit_entry_non_node {
         {
             $caller:tt
