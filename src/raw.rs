@@ -220,7 +220,8 @@ macro_rules! make_func {
     };
 }
 
-/// Defines an associated function for `JitState` for each `jit_entry`.
+/// Defines an inherent method for `JitState` for each `jit_entry` that
+/// corresponds to a `jit_new_node_*` call.
 macro_rules! jit_filtered {
     {
         $caller:tt
@@ -381,6 +382,8 @@ fn trivial_invocation() {
 
     impl MyDefault for jit_pointer_t { fn default() -> Self { crate::types::NULL } }
 
+    /// Calls the function represented by each `jit_entry` that corresponds to
+    /// a `jit_new_node_*` call.
     macro_rules! jit_filtered {
         {
             $caller:tt

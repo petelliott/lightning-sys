@@ -399,6 +399,8 @@ macro_rules! jit_inner {
     ( $( $any:tt )* ) => { compile_error!{ "Unrecognized jit_entry -- check formatting of generated macros" } };
 }
 
+/// Defines an inherent method for `JitState` for each `jit_entry` that
+/// corresponds to a `jit_new_node_*` call.
 macro_rules! jit_filtered {
     {
         $caller:tt
