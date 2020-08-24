@@ -279,11 +279,15 @@ impl<'a> JitState<'a> {
     jit_impl!(live, w);
     jit_impl!(align, w);
 
-    pub fn name(&mut self, name: &str) -> JitNode<'a> {
+    pub fn name(&mut self, name: Option<&str>) -> JitNode<'a> {
         // I looked at the lightning code, this will be copied
-        let cs = CString::new(name).unwrap();
+        let cs = name
+            .map(CString::new)
+            .map(Result::unwrap)
+            .map(|c| c.as_ptr())
+            .unwrap_or(core::ptr::null());
         JitNode{
-            node: unsafe { bindings::_jit_name(self.state, cs.as_ptr()) },
+            node: unsafe { bindings::_jit_name(self.state, cs) },
             phantom: std::marker::PhantomData,
         }
     }
