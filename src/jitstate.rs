@@ -419,6 +419,28 @@ macro_rules! jit_filtered {
     };
 }
 
+macro_rules! jit_entry_non_node {
+    {
+        $caller:tt
+        decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+        root = [{ destroy_state }]
+        parts = [{ $stem:ident $( $suffix:ident )* }]
+        invokes = [{ $invokes:ident( $( $outarg:ident ),* ) }]
+    } => {
+        make_func! {
+            func = [{ $stem }]
+            body = [{ unsafe { self.$entry( $( $inarg ),* ) } }]
+            rettype = [{ () }]
+            parmhead = [{ self, }] // Takes `self` by move, NOT by reference
+            parmnames = [{ }]
+            parmtypes = [{ }]
+        }
+    };
+    { $( $tokens:tt )* } => {
+        // Ignore these for now.
+    };
+}
+
 include!(concat!(env!("OUT_DIR"), "/entries.rs"));
 
 #[test]
@@ -452,16 +474,6 @@ fn trivial_invocation() {
     /// Calls the function represented by each `jit_entry` that does *not*
     /// correspond to a `jit_new_node_*` call.
     macro_rules! jit_entry_non_node {
-        {
-            $caller:tt
-            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
-            root = [{ destroy_state }]
-            parts = [{ $stem:ident $( $suffix:ident )* }]
-            invokes = [{ $( $other:tt )* }]
-        } => {
-            // Ignore jit_destroy_state, since it gets turned into a Drop
-            // implementation and destroying before Drop seems problematic.
-        };
         {
             $caller:tt
             decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
