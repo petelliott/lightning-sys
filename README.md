@@ -12,7 +12,7 @@ This crate links explicitly against its own packaged copy of lightning-2.1.3.
 
 ## MSRV
 
-The minimum supported Rust version is **1.39**.
+The minimum supported Rust version is **1.40**.
 
 ## Examples
 
