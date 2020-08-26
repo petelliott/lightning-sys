@@ -109,18 +109,27 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_r_invalid() { let _ = Reg::R(Jit::new().r_num()).to_ffi(); }
+
+    #[test]
+    #[should_panic]
+    fn test_v_invalid() { let _ = Reg::R(Jit::new().v_num()).to_ffi(); }
+
+    #[test]
+    #[should_panic]
+    fn test_f_invalid() { let _ = Reg::R(Jit::new().f_num()).to_ffi(); }
+
+    #[test]
     fn test_to_ffi() {
         let jit = Jit::new();
 
-        assert!(std::panic::catch_unwind(|| Reg::R(jit.r_num()).to_ffi()).is_err());
         let _ = Reg::R(jit.r_num()-1).to_ffi();
         let _ = Reg::R(0).to_ffi();
 
-        assert!(std::panic::catch_unwind(|| Reg::V(jit.v_num()).to_ffi()).is_err());
         let _ = Reg::V(jit.v_num()-1).to_ffi();
         let _ = Reg::V(0).to_ffi();
 
-        assert!(std::panic::catch_unwind(|| Reg::F(jit.f_num()).to_ffi()).is_err());
         let _ = Reg::F(jit.f_num()-1).to_ffi();
         let _ = Reg::F(0).to_ffi();
     }
