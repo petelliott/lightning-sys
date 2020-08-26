@@ -1,5 +1,6 @@
 #![allow(clippy::mutex_atomic)] // Avoid clippy warning about JITS_MADE
 #![allow(clippy::new_without_default)] // Avoid clippy warning about Jit::new
+#![deny(unused_must_use)]
 
 use std::sync::Mutex;
 
@@ -16,6 +17,7 @@ lazy_static! {
 }
 
 impl<'a> Jit<'a> {
+    #[must_use]
     pub fn new() -> Jit<'a> {
         let mut m = JITS_MADE.lock().unwrap();
 
@@ -32,6 +34,7 @@ impl<'a> Jit<'a> {
 
     // This takes &mut self instead of &self because the unsafe operations wrapped herein are
     // inherently mutating.
+    #[must_use]
     pub fn new_state(&mut self) -> JitState {
         JitState {
             state: unsafe {
@@ -41,18 +44,21 @@ impl<'a> Jit<'a> {
         }
     }
 
+    #[must_use]
     pub fn r_num(&self) -> bindings::jit_gpr_t {
         unsafe {
             bindings::lgsys_JIT_R_NUM()
         }
     }
 
+    #[must_use]
     pub fn v_num(&self) -> bindings::jit_gpr_t {
         unsafe {
             bindings::lgsys_JIT_V_NUM()
         }
     }
 
+    #[must_use]
     pub fn f_num(&self) -> bindings::jit_gpr_t {
         unsafe {
             bindings::lgsys_JIT_F_NUM()
@@ -84,12 +90,12 @@ mod tests {
     fn test_jit() {
         {
             let _jit = Jit::new();
-            Jit::new();
+            let _ = Jit::new();
         }
 
         {
             let _jit = Jit::new();
-            Jit::new();
+            let _ = Jit::new();
         }
 
     }
@@ -107,15 +113,15 @@ mod tests {
         let jit = Jit::new();
 
         assert!(std::panic::catch_unwind(|| Reg::R(jit.r_num()).to_ffi()).is_err());
-        Reg::R(jit.r_num()-1).to_ffi();
-        Reg::R(0).to_ffi();
+        let _ = Reg::R(jit.r_num()-1).to_ffi();
+        let _ = Reg::R(0).to_ffi();
 
         assert!(std::panic::catch_unwind(|| Reg::V(jit.v_num()).to_ffi()).is_err());
-        Reg::V(jit.v_num()-1).to_ffi();
-        Reg::V(0).to_ffi();
+        let _ = Reg::V(jit.v_num()-1).to_ffi();
+        let _ = Reg::V(0).to_ffi();
 
         assert!(std::panic::catch_unwind(|| Reg::F(jit.f_num()).to_ffi()).is_err());
-        Reg::F(jit.f_num()-1).to_ffi();
-        Reg::F(0).to_ffi();
+        let _ = Reg::F(jit.f_num()-1).to_ffi();
+        let _ = Reg::F(0).to_ffi();
     }
 }

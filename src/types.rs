@@ -24,6 +24,7 @@ pub const NULL: JitPointer = null_mut::<c_void>();
 
 pub(crate) trait ToFFI {
     type Type;
+    #[must_use]
     fn to_ffi(&self) -> Self::Type;
 }
 
