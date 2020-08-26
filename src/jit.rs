@@ -1,8 +1,6 @@
 #![allow(clippy::mutex_atomic)] // Avoid clippy warning about JITS_MADE
 #![allow(clippy::new_without_default)] // Avoid clippy warning about Jit::new
 
-use std::os::raw;
-use std::ptr;
 use std::sync::Mutex;
 
 use crate::bindings;
@@ -24,7 +22,7 @@ impl<'a> Jit<'a> {
         if *m == 0 {
             unsafe {
                 //TODO: figure out how to get ptr to argv[0]
-                bindings::init_jit(ptr::null::<raw::c_char>());
+                bindings::init_jit(std::ptr::null());
             }
         }
 
