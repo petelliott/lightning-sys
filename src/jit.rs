@@ -124,13 +124,8 @@ mod tests {
     fn test_to_ffi() {
         let jit = Jit::new();
 
-        let _ = Reg::R(jit.r_num()-1).to_ffi();
-        let _ = Reg::R(0).to_ffi();
-
-        let _ = Reg::V(jit.v_num()-1).to_ffi();
-        let _ = Reg::V(0).to_ffi();
-
-        let _ = Reg::F(jit.f_num()-1).to_ffi();
-        let _ = Reg::F(0).to_ffi();
+        for n in 0..jit.r_num() { let _ = Reg::R(n).to_ffi(); }
+        for n in 0..jit.v_num() { let _ = Reg::V(n).to_ffi(); }
+        for n in 0..jit.f_num() { let _ = Reg::F(n).to_ffi(); }
     }
 }
