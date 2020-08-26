@@ -45,21 +45,21 @@ impl<'a> Jit<'a> {
     }
 
     #[must_use]
-    pub fn r_num(&self) -> bindings::jit_gpr_t {
+    pub fn r_num() -> bindings::jit_gpr_t {
         unsafe {
             bindings::lgsys_JIT_R_NUM()
         }
     }
 
     #[must_use]
-    pub fn v_num(&self) -> bindings::jit_gpr_t {
+    pub fn v_num() -> bindings::jit_gpr_t {
         unsafe {
             bindings::lgsys_JIT_V_NUM()
         }
     }
 
     #[must_use]
-    pub fn f_num(&self) -> bindings::jit_gpr_t {
+    pub fn f_num() -> bindings::jit_gpr_t {
         unsafe {
             bindings::lgsys_JIT_F_NUM()
         }
@@ -102,30 +102,27 @@ mod tests {
 
     #[test]
     fn test_reg_num() {
-        let jit = Jit::new();
-        assert!(jit.r_num() >= 3);
-        assert!(jit.v_num() >= 3);
-        assert!(jit.f_num() >= 6);
+        assert!(Jit::r_num() >= 3);
+        assert!(Jit::v_num() >= 3);
+        assert!(Jit::f_num() >= 6);
     }
 
     #[test]
     #[should_panic]
-    fn test_r_invalid() { let _ = Reg::R(Jit::new().r_num()).to_ffi(); }
+    fn test_r_invalid() { let _ = Reg::R(Jit::r_num()).to_ffi(); }
 
     #[test]
     #[should_panic]
-    fn test_v_invalid() { let _ = Reg::R(Jit::new().v_num()).to_ffi(); }
+    fn test_v_invalid() { let _ = Reg::R(Jit::v_num()).to_ffi(); }
 
     #[test]
     #[should_panic]
-    fn test_f_invalid() { let _ = Reg::R(Jit::new().f_num()).to_ffi(); }
+    fn test_f_invalid() { let _ = Reg::R(Jit::f_num()).to_ffi(); }
 
     #[test]
     fn test_to_ffi() {
-        let jit = Jit::new();
-
-        for n in 0..jit.r_num() { let _ = Reg::R(n).to_ffi(); }
-        for n in 0..jit.v_num() { let _ = Reg::V(n).to_ffi(); }
-        for n in 0..jit.f_num() { let _ = Reg::F(n).to_ffi(); }
+        for n in 0..Jit::r_num() { let _ = Reg::R(n).to_ffi(); }
+        for n in 0..Jit::v_num() { let _ = Reg::V(n).to_ffi(); }
+        for n in 0..Jit::f_num() { let _ = Reg::F(n).to_ffi(); }
     }
 }
