@@ -15,7 +15,7 @@ lazy_static = "1.4.0"
 tt-call = "1.0"
 
 [build-dependencies]
-bindgen = { version = "0.54.1", default-features = false, features = ["runtime"] }
+bindgen = { version = "0.55.0", default-features = false, features = ["runtime"] }
 cc = "1.0"
 
 [dev-dependencies]

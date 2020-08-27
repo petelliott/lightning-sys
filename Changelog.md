@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Set a Minimum Supported Rust Version (MSRV) of 1.40.0 (#49)
+
 ## [0.2.2] - 2020-08-22
 ### Added
 - Introduced `Changelog.md` (#48)
