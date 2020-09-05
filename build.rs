@@ -69,9 +69,7 @@ fn chop_suffixes(orig: &str) -> Vec<&str> {
 
     // Handle special internal movs
     if orig.starts_with("mov") && num_underscores > 1 {
-        // Accommodate the length of the initial "movr" or "movi".
-        // Treat multiple suffixes as one concatenated suffix in this case.
-        return vec![&orig[..4], &orig[4..]];
+        return orig.split('_').collect();
     }
 
     if num_underscores == 0 {
