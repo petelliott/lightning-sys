@@ -69,9 +69,7 @@ fn chop_suffixes(orig: &str) -> Vec<&str> {
 
     // Handle special internal movs
     if orig.starts_with("mov") && num_underscores > 1 {
-        // Accommodate the length of the initial "movr" or "movi".
-        // Treat multiple suffixes as one concatenated suffix in this case.
-        return vec![&orig[..4], &orig[4..]];
+        return orig.split('_').collect();
     }
 
     if num_underscores == 0 {
@@ -111,36 +109,37 @@ type InverseVariantMap<'a> = BTreeMap<String,&'a str>;
 
 fn extract<'a>(
     variants: &impl Index<&'a str,Output=Pieces<'a>>,
-    inverse_variants: &impl Index<&'a str,Output=&'a str>,
+    inverse_variants: &BTreeMap<String,&'a str>,
     entry: &'a str,
     orig: &'a str,
-) -> Record {
+) -> Option<Record> {
     let brief = &entry[..entry.find('(').unwrap()];
     let core = brief.trim_start_matches("jit_");
-    let iv = &inverse_variants[core];
-    let pieces =
-        std::iter::once(iv.clone())
-            .chain(
-                variants[iv].iter()
-                    .find(|e| core == e.concat())
-                    .unwrap()
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(idx, v)|
-                         if idx == 0 {
-                             let v = v.trim_start_matches(iv);
-                             if v.is_empty() { None } else { Some(v) }
-                         } else {
-                             Some(v)
-                         }
-                    )
-            )
-            .map(ToString::to_string)
-            .collect::<Vec<_>>();
-    let stem = core.to_string();
-    let entry = entry.to_string();
-    let orig = orig.to_string();
-    Record { entry, stem, pieces, orig }
+    inverse_variants.get(core).and_then(|iv| {
+        let pieces =
+            std::iter::once(iv.clone())
+                .chain(
+                    variants[iv].iter()
+                        .find(|e| core == e.concat())
+                        .unwrap()
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(idx, v)|
+                             if idx == 0 {
+                                 let v = v.trim_start_matches(iv);
+                                 if v.is_empty() { None } else { Some(v) }
+                             } else {
+                                 Some(v)
+                             }
+                        )
+                )
+                .map(ToString::to_string)
+                .collect::<Vec<_>>();
+        let stem = core.to_string();
+        let entry = entry.to_string();
+        let orig = orig.to_string();
+        Some(Record { entry, stem, pieces, orig })
+    })
 }
 
 /// Takes a list of macro left-hand-sides (like `["jit_stxr_i(u,v,w)"]`) and
@@ -181,9 +180,12 @@ fn make_variant_maps<'a>(
 ) -> (VariantMap<'a>, InverseVariantMap<'a>) {
     let kind_match = |needle: &str, haystack: &str| {
         let last_char = haystack.chars().last().unwrap();
+        let last_matches = (last_char == 'r' || last_char == 'i')
+            && !haystack.contains('_')
+            && haystack.len() > 1;
         haystack.starts_with(needle)
             && (haystack.len() - needle.len() < 2)
-            && (haystack.len() == needle.len() || last_char == 'r' || last_char == 'i')
+            && (haystack.len() == needle.len() || last_matches)
     };
     let variants: BTreeMap<_,Vec<_>> =
         roots
@@ -209,7 +211,7 @@ fn parse_macros<'a>(pairs: &[(&'a str,&'a str)]) -> Vec<Record> {
 
     pairs
         .iter()
-        .map(|(k, v)| extract(&variants, &inverse_variants, k, &v))
+        .filter_map(|(k, v)| extract(&variants, &inverse_variants, k, &v))
         .collect()
 }
 
