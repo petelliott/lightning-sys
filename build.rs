@@ -76,13 +76,12 @@ fn chop_suffixes(orig: &str) -> Vec<&str> {
         return vec![orig];
     }
 
-    assert_eq!(num_underscores, 1);
-
     const SUFFIXES: &[&str] = &[
         "_f", "_d",
         "_u",
         "_c", "_i", "_l", "_s",
         "_uc", "_ui", "_ul", "_us",
+        "_p",
     ];
 
     for &suff in SUFFIXES {
@@ -340,7 +339,6 @@ fn main() -> std::io::Result<()> {
             .map(|(key, value)| {
                 (key.as_str(), std::str::from_utf8(value).unwrap())
             })
-            .filter(|(_, value)| value.contains("jit_new_node"))
             .collect();
 
     let output = make_printable(parse_macros(&relevant));
