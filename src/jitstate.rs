@@ -812,3 +812,54 @@ impl<'a> JitState<'a> {
     jit_reexport!(reti_d, imm: f64);
     jit_reexport!(retval_d, reg: Reg);
 }
+
+/// Defines an inherent method for `JitState` for each `jit_entry` that
+/// corresponds to a `jit_new_node_*` call.
+#[cfg(test)]
+#[test]
+fn trivial_invocation() {
+    trait MyDefault { fn default() -> Self; }
+
+    impl MyDefault for f32        { fn default() -> Self { Default::default() } }
+    impl MyDefault for f64        { fn default() -> Self { Default::default() } }
+
+    #[cfg(target_pointer_width = "64")] /* avoid conflicting with JitWord */
+    impl MyDefault for i32        { fn default() -> Self { Default::default() } }
+
+    impl MyDefault for JitWord    { fn default() -> Self { Default::default() } }
+    impl MyDefault for Reg        { fn default() -> Self { Reg::R(0)          } }
+    impl MyDefault for JitPointer { fn default() -> Self { crate::types::NULL } }
+
+    macro_rules! jit_entry_for_node {
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $enum_in:ident $(, $inarg:ident )* ) }]
+            root = [{ $root:ident }]
+            parts = [{ new_node $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
+        } => {
+            /* skip */
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
+        } => {
+            {
+                $( let $inarg = MyDefault::default(); )*
+                let _ = $crate::Jit::new().new_state().$root( $( $inarg ),* );
+            }
+        };
+    }
+
+    macro_rules! jit_entries {
+        ( $( $tokens:tt )* ) => {
+            { $( $tokens )* }
+        };
+    }
+
+    include!{ concat!(env!("OUT_DIR"), "/entries.rs") }
+}
+
