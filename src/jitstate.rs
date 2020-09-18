@@ -812,3 +812,155 @@ impl<'a> JitState<'a> {
     jit_reexport!(reti_d, imm: f64);
     jit_reexport!(retval_d, reg: Reg);
 }
+
+/// Defines an inherent method for `JitState` for each `jit_entry` that
+/// corresponds to a `jit_new_node_*` call.
+#[cfg(test)]
+#[test]
+fn trivial_invocation() {
+    use tt_call::*;
+
+    let mut entry_count = 0;
+
+    trait MyDefault { fn default() -> Self; }
+
+    impl MyDefault for f32        { fn default() -> Self { Default::default() } }
+    impl MyDefault for f64        { fn default() -> Self { Default::default() } }
+
+    #[cfg(target_pointer_width = "64")] /* avoid conflicting with JitWord */
+    impl MyDefault for i32        { fn default() -> Self { Default::default() } }
+
+    impl MyDefault for JitWord    { fn default() -> Self { Default::default() } }
+    impl MyDefault for Reg        { fn default() -> Self { Reg::R(0)          } }
+    impl MyDefault for JitPointer { fn default() -> Self { crate::types::NULL } }
+
+    macro_rules! jit_entry_for_node {
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $enum_in:ident $(, $inarg:ident )* ) }]
+            root = [{ $root:ident }]
+            parts = [{ new_node $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
+        } => {
+            /* skip */
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( $enum:ident $( , $outarg:ident )* ) }]
+        } => {
+            {
+                entry_count += 1;
+                $( let $inarg = MyDefault::default(); )*
+                let _ = $crate::Jit::new().new_state().$root( $( $inarg ),* );
+            }
+        };
+    }
+
+    macro_rules! jit_entry_non_node {
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ destroy_state }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $( $other:tt )* }]
+        } => {
+            // Ignore jit_destroy_state, since it gets turned into a Drop
+            // implementation and destroying before Drop seems problematic.
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ disassemble }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( _jit $( , $outarg:ident )* ) }]
+        } => {
+            entry_count += 1;
+            // Allow disassembly to be configured out.
+            #[cfg(disassembly)]
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            {
+                if false {
+                    // We cannot yet actually invoke these, but at least we can
+                    // check that the functions exist and take the right number
+                    // of parameters.
+                    $( let $outarg = unimplemented!(); )*
+                    let _ = $crate::Jit::new().new_state().disassemble( $( $outarg ),* );
+                }
+            }
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $invokes:ident( _jit $( , $outarg:ident )* ) }]
+        } => {
+            entry_count += 1;
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            {
+                if false {
+                    // We cannot yet actually invoke these, but at least we can
+                    // check that the functions exist and take the right number
+                    // of parameters.
+                    $( let $outarg = unimplemented!(); )*
+                    let _ = $crate::Jit::new().new_state().$root( $( $outarg ),* );
+                }
+            }
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ jit_cpu $( $other:tt )* }]
+        } => {
+            // Ignore macros that expand to an expression referencing
+            // architecture-specific details.
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $other:tt }]
+        } => {
+            // For now, ignore macros that expand to an expression that is not a
+            // function call.
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ $stem:ident $( $suffix:ident )* }]
+            invokes = [{ $( $other:tt )+ }]
+        } => {
+            entry_count += 1;
+            // We cannot yet actually invoke these, but at least we can check
+            // that the functions exist.
+            let _ = JitState::$root;
+        };
+    }
+
+    macro_rules! jit_entries {
+        ( $( $tokens:tt )* ) => {
+            { $( $tokens )* }
+        };
+    }
+
+    include!{ concat!(env!("OUT_DIR"), "/entries.rs") }
+
+    // The exact number of entry points depends on things like the target
+    // architecture's word size, so we cannot robustly check for an exact
+    // number, but we can put some useful bounds on the number that allow us to
+    // catch egregious errors at least. We also do not necessarily want to break
+    // immediately when a new version of GNU lightning adds or removes a few
+    // entry points -- this is a sanity check only.
+    assert!(entry_count > 400, "not enough entry points were seen");
+    assert!(entry_count < 450, "too many entry points were seen");
+}
+
