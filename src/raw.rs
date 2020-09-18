@@ -289,6 +289,22 @@ macro_rules! jit_entry_for_node {
 }
 
 macro_rules! jit_entry_non_node {
+    {
+        $caller:tt
+        decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+        root = [{ destroy_state }]
+        parts = [{ $stem:ident $( $suffix:ident )* }]
+        invokes = [{ $invokes:ident( _jit $( , $outarg:ident )* ) }]
+    } => {
+        make_func! {
+            func = [{ $entry }]
+            body = [{ $invokes( self.state, $( $outarg ),* ) }]
+            rettype = [{ () }]
+            parmhead = [{ self, }] // Takes `self` by move, NOT by reference
+            parmnames = [{ }]
+            parmtypes = [{ }]
+        }
+    };
     { $( $tokens:tt )* } => {
         // Ignore these for now.
     };
@@ -407,6 +423,12 @@ fn trivial_invocation() {
                 $( let $inarg = MyDefault::default(); )*
                 let _ = $crate::Jit::new().new_state().$entry( $( $inarg ),* );
             }
+        };
+    }
+
+    macro_rules! jit_entry_non_node {
+        { $( $tokens:tt )* } => {
+            // Ignore these for now.
         };
     }
 

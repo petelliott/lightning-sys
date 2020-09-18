@@ -10,7 +10,6 @@ repository = "https://github.com/petelliott/lightning-sys"
 documentation = "https://docs.rs/lightning-sys"
 
 [dependencies]
-paste = "0.1.18"
 lazy_static = "1.4.0"
 tt-call = "1.0"
 
