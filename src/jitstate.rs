@@ -112,6 +112,11 @@ impl<'a> JitState<'a> {
 
     jit_reexport!(_jit_set_data, set_data, buf: JitPointer, data_size: JitWord, flags: JitWord);
 
+    // _jit_get_reg allocates a register, given a register class.
+    jit_reexport!(_jit_get_reg, get_reg, regclass: i32; -> i32);
+    // _jit_unget_reg frees an allocated register.
+    jit_reexport!(_jit_unget_reg, unget_reg, reg: i32);
+
     jit_reexport!(_jit_print, print);
 }
 
