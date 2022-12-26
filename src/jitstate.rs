@@ -580,6 +580,6 @@ fn trivial_invocation() {
     // immediately when a new version of GNU lightning adds or removes a few
     // entry points -- this is a sanity check only.
     assert!(entry_count > 400, "not enough entry points were seen");
-    assert!(entry_count < 450, "too many entry points were seen");
+    assert!(entry_count < 500, "too many entry points were seen");
 }
 
