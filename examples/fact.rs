@@ -14,7 +14,7 @@ fn main() {
     let fact = js.forward();
 
     js.prolog();                        /* Entry point of the factorial function */
-    let inp = js.arg();                 /* Receive an integer argument */
+    let inp = js.arg_i();               /* Receive an integer argument */
     js.getarg(JIT_R0, &inp);            /* Move argument to RO */
     js.prepare();
     js.pushargi(1);                     /* This is the accumulator */
