@@ -117,6 +117,9 @@ impl<'a> JitState<'a> {
     // _jit_unget_reg frees an allocated register.
     jit_reexport!(_jit_unget_reg, unget_reg, reg: i32);
 
+    jit_reexport!(_jit_protect, protect);
+    jit_reexport!(_jit_unprotect, unprotect);
+
     jit_reexport!(_jit_print, print);
 }
 
