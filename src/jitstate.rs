@@ -383,6 +383,8 @@ macro_rules! jit_inner {
     // All quad instructions
     ( $a:tt [ $q:tt, i $(, $y:tt)* ] => jit_new_node_qww $r:tt ) => { mm!{ $a => (i32, i32, Reg, Reg) => $r } };
     ( $a:tt [ $q:tt, r $(, $y:tt)* ] => jit_new_node_qww $r:tt ) => { mm!{ $a => (Reg, Reg, Reg, Reg) => $r } };
+    ( $a:tt [ $q:tt, i $(, $y:tt)* ] => jit_new_node_wwq $r:tt ) => { mm!{ $a => (Reg, Reg, i32, i32) => $r } };
+    ( $a:tt [ $q:tt, r $(, $y:tt)* ] => jit_new_node_wwq $r:tt ) => { mm!{ $a => (Reg, Reg, Reg, Reg) => $r } };
     // Branches
     ( $a:tt [ $q:tt    $(, $y:tt)* ] => jit_new_node_pwd $r:tt ) => { mm!{ $a => (Reg, f64)           => $r } };
     ( $a:tt [ $q:tt    $(, $y:tt)* ] => jit_new_node_pwf $r:tt ) => { mm!{ $a => (Reg, f32)           => $r } };
