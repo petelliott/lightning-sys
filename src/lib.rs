@@ -134,15 +134,15 @@
 //!                 js.prolog();
 //!                 js.frame(16);
 //!     let f_ent = js.label(); // TCO entry point
-//!     let ac    = js.arg();
-//!     let ina   = js.arg();
+//!     let mut ac  = js.arg();
+//!     let mut ina = js.arg();
 //!                 js.getarg(Reg::R(0), &ac);
 //!                 js.getarg(Reg::R(1), &ina);
 //!     let f_out = js.blei(Reg::R(1), 1);
 //!                 js.mulr(Reg::R(0), Reg::R(0), Reg::R(1));
-//!                 js.putargr(Reg::R(0), &ac);
+//!                 js.putargr(Reg::R(0), &mut ac);
 //!                 js.subi(Reg::R(1), Reg::R(1), 1);
-//!                 js.putargr(Reg::R(1), &ina);
+//!                 js.putargr(Reg::R(1), &mut ina);
 //!     let jump  = js.jmpi(); // tail call optimiation
 //!                 js.patch_at(&jump, &f_ent);
 //!                 js.patch(&f_out);
