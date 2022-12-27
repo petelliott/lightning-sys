@@ -267,6 +267,9 @@ fn main() -> std::io::Result<()> {
     }
 
     let definitions = &[
+        // Without HAVE_MMAP, we crash.
+        // TODO make HAVE_MMAP dependent on target
+        ("HAVE_MMAP", None),
         // TODO make HAVE_FFSL dependent on target (it is in POSIX, but Windows
         // might not have it)
         ("HAVE_FFSL", None),
