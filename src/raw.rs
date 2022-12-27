@@ -56,6 +56,7 @@ macro_rules! jit_signature {
     { $c:tt suffix = [{ jit_new_node_pwf }] } => { tt_return!{ $c parmtypes = [{ jit_pointer_t, jit_word_t, jit_float32_t         }] } };
     { $c:tt suffix = [{ jit_new_node_pww }] } => { tt_return!{ $c parmtypes = [{ jit_pointer_t, jit_word_t, jit_word_t            }] } };
     { $c:tt suffix = [{ jit_new_node_qww }] } => { tt_return!{ $c parmtypes = [{ jit_int32_t, jit_int32_t, jit_word_t, jit_word_t }] } };
+    { $c:tt suffix = [{ jit_new_node_wwq }] } => { tt_return!{ $c parmtypes = [{ jit_word_t, jit_word_t, jit_int32_t, jit_int32_t }] } };
     { $c:tt suffix = [{ jit_new_node_w   }] } => { tt_return!{ $c parmtypes = [{ jit_word_t                                       }] } };
     { $c:tt suffix = [{ jit_new_node_wd  }] } => { tt_return!{ $c parmtypes = [{ jit_word_t, jit_float64_t                        }] } };
     { $c:tt suffix = [{ jit_new_node_wf  }] } => { tt_return!{ $c parmtypes = [{ jit_word_t, jit_float32_t                        }] } };
@@ -78,6 +79,7 @@ macro_rules! is_new_node_func {
     { $caller:tt input = [{ jit_new_node_pwf }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
     { $caller:tt input = [{ jit_new_node_pww }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
     { $caller:tt input = [{ jit_new_node_qww }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
+    { $caller:tt input = [{ jit_new_node_wwq }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
     { $caller:tt input = [{ jit_new_node_w   }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
     { $caller:tt input = [{ jit_new_node_wd  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
     { $caller:tt input = [{ jit_new_node_wf  }] } => { tt_return!{ $caller is_new_node_func = [{ true  }] } };
@@ -440,7 +442,7 @@ fn trivial_invocation() {
 
     include!{ concat!(env!("OUT_DIR"), "/entries.rs") }
 
-    assert_eq!(new_node_count, 19, "an unexpected number of jit_new_node* entry points were seen");
+    assert_eq!(new_node_count, 20, "an unexpected number of jit_new_node* entry points were seen");
     assert!(entry_count > 320, "an unexpected number of jit_new_node* callers were seen");
 }
 

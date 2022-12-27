@@ -112,6 +112,14 @@ impl<'a> JitState<'a> {
 
     jit_reexport!(_jit_set_data, set_data, buf: JitPointer, data_size: JitWord, flags: JitWord);
 
+    // _jit_get_reg allocates a register, given a register class.
+    jit_reexport!(_jit_get_reg, get_reg, regclass: i32; -> i32);
+    // _jit_unget_reg frees an allocated register.
+    jit_reexport!(_jit_unget_reg, unget_reg, reg: i32);
+
+    jit_reexport!(_jit_protect, protect);
+    jit_reexport!(_jit_unprotect, unprotect);
+
     jit_reexport!(_jit_print, print);
 }
 
@@ -181,6 +189,41 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_retval_ui, retval_ui, rv: Reg);
     #[cfg(target_pointer_width = "64")]
     jit_reexport!(_jit_retval_l, retval_l, rv: Reg);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(arg_i => arg; -> JitNode<'a>);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(arg_l => arg; -> JitNode<'a>);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(putargr_i => putargr, arg: Reg, node: &mut JitNode<'a>);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(putargi_i => putargi, arg: JitWord, node: &mut JitNode<'a>);
+
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(putargr_l => putargr, arg: Reg, node: &mut JitNode<'a>);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(putargi_l => putargi, arg: JitWord, node: &mut JitNode<'a>);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(pushargr_i => pushargr, arg: Reg);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(pushargi_i => pushargi, arg: JitWord);
+
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(pushargr_l => pushargr, arg: Reg);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(pushargi_l => pushargi, arg: JitWord);
+
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(retr_i => retr, arg: Reg);
+    #[cfg(target_pointer_width = "32")]
+    jit_alias!(reti_i => reti, arg: JitWord);
+
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(retr_l => retr, arg: Reg);
+    #[cfg(target_pointer_width = "64")]
+    jit_alias!(reti_l => reti, arg: JitWord);
 }
 
 /// implementations of general instructions
@@ -223,7 +266,18 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_allocai, allocai, size: i32; -> i32);
     jit_reexport!(_jit_allocar, allocar, off: Reg, size: Reg);
 
-    jit_reexport!(_jit_arg, arg; -> JitNode<'a>);
+    fn _arg_helper(&mut self, code: bindings::jit_code_t) -> JitNode<'a> {
+        JitNode{
+            node: unsafe { bindings::_jit_arg(self.state, code) },
+            phantom: std::marker::PhantomData,
+        }
+    }
+
+    pub fn arg_c(&mut self) -> JitNode<'a> { self._arg_helper(bindings::jit_code_t::jit_code_arg_c) }
+    pub fn arg_s(&mut self) -> JitNode<'a> { self._arg_helper(bindings::jit_code_t::jit_code_arg_s) }
+    pub fn arg_i(&mut self) -> JitNode<'a> { self._arg_helper(bindings::jit_code_t::jit_code_arg_i) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn arg_l(&mut self) -> JitNode<'a> { self._arg_helper(bindings::jit_code_t::jit_code_arg_l) }
 
     jit_reexport!(_jit_getarg_c, getarg_c, reg: Reg, node: &JitNode<'a>);
     jit_reexport!(_jit_getarg_uc, getarg_uc, reg: Reg, node: &JitNode<'a>);
@@ -231,8 +285,34 @@ impl<'a> JitState<'a> {
     jit_reexport!(_jit_getarg_us, getarg_us, reg: Reg, node: &JitNode<'a>);
     jit_reexport!(_jit_getarg_i, getarg_i, reg: Reg, node: &JitNode<'a>);
 
-    jit_reexport!(_jit_putargr, putargr, reg: Reg, arg: &JitNode<'a>);
-    jit_reexport!(_jit_putargi, putargi, imm: JitWord, arg: &JitNode<'a>);
+    fn _putargr_helper(&mut self, arg: Reg, node: &mut JitNode<'a>, code: bindings::jit_code_t) {
+        unsafe { bindings::_jit_putargr(self.state, arg.to_ffi(), node.to_ffi(), code) }
+    }
+
+    pub fn putargr_c (&mut self, arg: Reg, node: &mut JitNode<'a>) { self._putargr_helper(arg, node, bindings::jit_code_t::jit_code_putargr_c) }
+    pub fn putargr_uc(&mut self, arg: Reg, node: &mut JitNode<'a>) { self._putargr_helper(arg, node, bindings::jit_code_t::jit_code_putargr_uc) }
+    pub fn putargr_s (&mut self, arg: Reg, node: &mut JitNode<'a>) { self._putargr_helper(arg, node, bindings::jit_code_t::jit_code_putargr_s) }
+    pub fn putargr_us(&mut self, arg: Reg, node: &mut JitNode<'a>) { self._putargr_helper(arg, node, bindings::jit_code_t::jit_code_putargr_us) }
+    pub fn putargr_i (&mut self, arg: Reg, node: &mut JitNode<'a>) { self._putargr_helper(arg, node, bindings::jit_code_t::jit_code_putargr_i) }
+
+    fn _putargi_helper(&mut self, arg: JitWord, node: &mut JitNode<'a>, code: bindings::jit_code_t) {
+        unsafe { bindings::_jit_putargi(self.state, arg.to_ffi(), node.to_ffi(), code) }
+    }
+
+    pub fn putargi_c (&mut self, arg: JitWord, node: &mut JitNode<'a>) { self._putargi_helper(arg, node, bindings::jit_code_t::jit_code_putargi_c) }
+    pub fn putargi_uc(&mut self, arg: JitWord, node: &mut JitNode<'a>) { self._putargi_helper(arg, node, bindings::jit_code_t::jit_code_putargi_uc) }
+    pub fn putargi_s (&mut self, arg: JitWord, node: &mut JitNode<'a>) { self._putargi_helper(arg, node, bindings::jit_code_t::jit_code_putargi_s) }
+    pub fn putargi_us(&mut self, arg: JitWord, node: &mut JitNode<'a>) { self._putargi_helper(arg, node, bindings::jit_code_t::jit_code_putargi_us) }
+    pub fn putargi_i (&mut self, arg: JitWord, node: &mut JitNode<'a>) { self._putargi_helper(arg, node, bindings::jit_code_t::jit_code_putargi_i) }
+
+    #[cfg(target_pointer_width = "64")]
+    pub fn putargr_ui(&mut self, arg: Reg, node: &mut JitNode<'a>) { self._putargr_helper(arg, node, bindings::jit_code_t::jit_code_putargr_ui) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn putargi_ui(&mut self, arg: JitWord, node: &mut JitNode<'a>) { self._putargi_helper(arg, node, bindings::jit_code_t::jit_code_putargi_ui) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn putargr_l(&mut self, arg: Reg, node: &mut JitNode<'a>) { self._putargr_helper(arg, node, bindings::jit_code_t::jit_code_putargr_l) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn putargi_l(&mut self, arg: JitWord, node: &mut JitNode<'a>) { self._putargi_helper(arg, node, bindings::jit_code_t::jit_code_putargi_l) }
 
     jit_reexport!(_jit_va_push, va_push, arg: Reg);
 
@@ -259,13 +339,69 @@ impl<'a> JitState<'a> {
     }
 
     jit_reexport!(_jit_prepare, prepare);
-    jit_reexport!(_jit_pushargr, pushargr, arg: Reg);
-    jit_reexport!(_jit_pushargi, pushargi, arg: JitWord);
+
+    fn _pushargr_helper(&mut self, arg: Reg, code: bindings::jit_code_t) {
+        unsafe { bindings::_jit_pushargr(self.state, arg.to_ffi(), code) }
+    }
+
+    pub fn pushargr_c (&mut self, arg: Reg) { self._pushargr_helper(arg, bindings::jit_code_t::jit_code_pushargr_c) }
+    pub fn pushargr_uc(&mut self, arg: Reg) { self._pushargr_helper(arg, bindings::jit_code_t::jit_code_pushargr_uc) }
+    pub fn pushargr_s (&mut self, arg: Reg) { self._pushargr_helper(arg, bindings::jit_code_t::jit_code_pushargr_s) }
+    pub fn pushargr_us(&mut self, arg: Reg) { self._pushargr_helper(arg, bindings::jit_code_t::jit_code_pushargr_us) }
+    pub fn pushargr_i (&mut self, arg: Reg) { self._pushargr_helper(arg, bindings::jit_code_t::jit_code_pushargr_i) }
+
+    fn _pushargi_helper(&mut self, arg: JitWord, code: bindings::jit_code_t) {
+        unsafe { bindings::_jit_pushargi(self.state, arg.to_ffi(), code) }
+    }
+
+    pub fn pushargi_c (&mut self, arg: JitWord) { self._pushargi_helper(arg, bindings::jit_code_t::jit_code_pushargi_c) }
+    pub fn pushargi_uc(&mut self, arg: JitWord) { self._pushargi_helper(arg, bindings::jit_code_t::jit_code_pushargi_uc) }
+    pub fn pushargi_s (&mut self, arg: JitWord) { self._pushargi_helper(arg, bindings::jit_code_t::jit_code_pushargi_s) }
+    pub fn pushargi_us(&mut self, arg: JitWord) { self._pushargi_helper(arg, bindings::jit_code_t::jit_code_pushargi_us) }
+    pub fn pushargi_i (&mut self, arg: JitWord) { self._pushargi_helper(arg, bindings::jit_code_t::jit_code_pushargi_i) }
+
+    #[cfg(target_pointer_width = "64")]
+    pub fn pushargr_ui(&mut self, arg: Reg) { self._pushargr_helper(arg, bindings::jit_code_t::jit_code_pushargr_ui) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn pushargi_ui(&mut self, arg: JitWord) { self._pushargi_helper(arg, bindings::jit_code_t::jit_code_pushargi_ui) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn pushargr_l(&mut self, arg: Reg) { self._pushargr_helper(arg, bindings::jit_code_t::jit_code_pushargr_l) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn pushargi_l(&mut self, arg: JitWord) { self._pushargi_helper(arg, bindings::jit_code_t::jit_code_pushargi_l) }
+
     jit_reexport!(_jit_finishr, finishr, arg: Reg);
     jit_reexport!(_jit_finishi, finishi, arg: JitPointer; -> JitNode<'a>);
     jit_reexport!(_jit_ret, ret);
-    jit_reexport!(_jit_retr, retr, rv: Reg);
-    jit_reexport!(_jit_reti, reti, rv: JitWord);
+
+    fn _retr_helper(&mut self, arg: Reg, code: bindings::jit_code_t) {
+        unsafe { bindings::_jit_retr(self.state, arg.to_ffi(), code) }
+    }
+
+    pub fn retr_c (&mut self, arg: Reg) { self._retr_helper(arg, bindings::jit_code_t::jit_code_retr_c) }
+    pub fn retr_uc(&mut self, arg: Reg) { self._retr_helper(arg, bindings::jit_code_t::jit_code_retr_uc) }
+    pub fn retr_s (&mut self, arg: Reg) { self._retr_helper(arg, bindings::jit_code_t::jit_code_retr_s) }
+    pub fn retr_us(&mut self, arg: Reg) { self._retr_helper(arg, bindings::jit_code_t::jit_code_retr_us) }
+    pub fn retr_i (&mut self, arg: Reg) { self._retr_helper(arg, bindings::jit_code_t::jit_code_retr_i) }
+
+    fn _reti_helper(&mut self, arg: JitWord, code: bindings::jit_code_t) {
+        unsafe { bindings::_jit_reti(self.state, arg.to_ffi(), code) }
+    }
+
+    pub fn reti_c (&mut self, arg: JitWord) { self._reti_helper(arg, bindings::jit_code_t::jit_code_reti_c) }
+    pub fn reti_uc(&mut self, arg: JitWord) { self._reti_helper(arg, bindings::jit_code_t::jit_code_reti_uc) }
+    pub fn reti_s (&mut self, arg: JitWord) { self._reti_helper(arg, bindings::jit_code_t::jit_code_reti_s) }
+    pub fn reti_us(&mut self, arg: JitWord) { self._reti_helper(arg, bindings::jit_code_t::jit_code_reti_us) }
+    pub fn reti_i (&mut self, arg: JitWord) { self._reti_helper(arg, bindings::jit_code_t::jit_code_reti_i) }
+
+    #[cfg(target_pointer_width = "64")]
+    pub fn retr_ui(&mut self, arg: Reg) { self._retr_helper(arg, bindings::jit_code_t::jit_code_retr_ui) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn reti_ui(&mut self, arg: JitWord) { self._reti_helper(arg, bindings::jit_code_t::jit_code_reti_ui) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn retr_l(&mut self, arg: Reg) { self._retr_helper(arg, bindings::jit_code_t::jit_code_retr_l) }
+    #[cfg(target_pointer_width = "64")]
+    pub fn reti_l(&mut self, arg: JitWord) { self._reti_helper(arg, bindings::jit_code_t::jit_code_reti_l) }
+
     jit_reexport!(_jit_retval_c, retval_c, rv: Reg);
     jit_reexport!(_jit_retval_uc, retval_uc, rv: Reg);
     jit_reexport!(_jit_retval_s, retval_s, rv: Reg);
@@ -378,6 +514,8 @@ macro_rules! jit_inner {
     // All quad instructions
     ( $a:tt [ $q:tt, i $(, $y:tt)* ] => jit_new_node_qww $r:tt ) => { mm!{ $a => (i32, i32, Reg, Reg) => $r } };
     ( $a:tt [ $q:tt, r $(, $y:tt)* ] => jit_new_node_qww $r:tt ) => { mm!{ $a => (Reg, Reg, Reg, Reg) => $r } };
+    ( $a:tt [ $q:tt, i $(, $y:tt)* ] => jit_new_node_wwq $r:tt ) => { mm!{ $a => (Reg, Reg, i32, i32) => $r } };
+    ( $a:tt [ $q:tt, r $(, $y:tt)* ] => jit_new_node_wwq $r:tt ) => { mm!{ $a => (Reg, Reg, Reg, Reg) => $r } };
     // Branches
     ( $a:tt [ $q:tt    $(, $y:tt)* ] => jit_new_node_pwd $r:tt ) => { mm!{ $a => (Reg, f64)           => $r } };
     ( $a:tt [ $q:tt    $(, $y:tt)* ] => jit_new_node_pwf $r:tt ) => { mm!{ $a => (Reg, f32)           => $r } };
@@ -488,6 +626,10 @@ fn trivial_invocation() {
         };
     }
 
+    // For some of the cases below, we cannot actually invoke the functions
+    // (either because we cannot construct meaningful arguments, or because we
+    // do not construct sufficient state beforehand), but at least we can check
+    // that the functions exist and take the right number of parameters.
     macro_rules! jit_entry_non_node {
         {
             $caller:tt
@@ -503,12 +645,68 @@ fn trivial_invocation() {
             #[allow(unused_variables)]
             {
                 if false {
-                    // We cannot yet actually invoke these, but at least we can
-                    // check that the functions exist and take the right number
-                    // of parameters.
                     $( let $outarg = unimplemented!(); )*
                     let _ = $crate::Jit::new().new_state().disassemble( $( $outarg ),* );
                 }
+            }
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ arg $( $tt:ident )* }]
+            invokes = [{ $invokes:ident ( _jit , $code:ident ) }]
+        } => {
+            entry_count += 1;
+            if false {
+                let _ = $crate::Jit::new().new_state().$root();
+            }
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ pusharg $( $tt:ident )* }]
+            invokes = [{ $invokes:ident ( _jit , $outarg:ident , $code:ident ) }]
+        } => {
+            entry_count += 1;
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            {
+                if false {
+                    let $outarg = unimplemented!();
+                    let _ = $crate::Jit::new().new_state().$root( $outarg );
+                }
+            }
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ putarg $( $tt:ident )* }]
+            invokes = [{ $invokes:ident ( _jit , $outarg0:ident , $outarg1:ident , $code:ident ) }]
+        } => {
+            entry_count += 1;
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            {
+                if false {
+                    let $outarg0 = unimplemented!();
+                    let $outarg1 = unimplemented!();
+                    let _ = $crate::Jit::new().new_state().$root( $outarg0, $outarg1 );
+                }
+            }
+        };
+        {
+            $caller:tt
+            decl = [{ $entry:ident( $( $inarg:ident ),* ) }]
+            root = [{ $root:ident }]
+            parts = [{ ret $( $other:tt )* }]
+            invokes = [{ $( $rest:tt )* }]
+        } => {
+            entry_count += 1;
+            if false {
+                let _ = $crate::Jit::new().new_state().ret();
             }
         };
         {
@@ -523,9 +721,6 @@ fn trivial_invocation() {
             #[allow(unused_variables)]
             {
                 if false {
-                    // We cannot yet actually invoke these, but at least we can
-                    // check that the functions exist and take the right number
-                    // of parameters.
                     $( let $outarg = unimplemented!(); )*
                     let _ = $crate::Jit::new().new_state().$root( $( $outarg ),* );
                 }
@@ -580,6 +775,6 @@ fn trivial_invocation() {
     // immediately when a new version of GNU lightning adds or removes a few
     // entry points -- this is a sanity check only.
     assert!(entry_count > 400, "not enough entry points were seen");
-    assert!(entry_count < 450, "too many entry points were seen");
+    assert!(entry_count < 500, "too many entry points were seen");
 }
 

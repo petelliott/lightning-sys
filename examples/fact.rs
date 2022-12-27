@@ -14,7 +14,7 @@ fn main() {
     let fact = js.forward();
 
     js.prolog();                        /* Entry point of the factorial function */
-    let inp = js.arg();                 /* Receive an integer argument */
+    let inp = js.arg_i();               /* Receive an integer argument */
     js.getarg(JIT_R0, &inp);            /* Move argument to RO */
     js.prepare();
     js.pushargi(1);                     /* This is the accumulator */
@@ -33,15 +33,15 @@ fn main() {
     js.prolog();
     js.frame(16);                       /* Reserve 16 bytes in the stack */
     let fact_entry = js.label();        /* This is the tail call entry point */
-    let ac = js.arg();                  /* The accumulator is the first argument */
-    let inp = js.arg();                 /* The factorial argument */
+    let mut ac = js.arg();              /* The accumulator is the first argument */
+    let mut inp = js.arg();             /* The factorial argument */
     js.getarg(JIT_R0, &ac);             /* Move the accumulator to R0 */
     js.getarg(JIT_R1, &inp);            /* Move the argument to R1 */
     let fact_out = js.blei(JIT_R1, 1);  /* Done if argument is one or less */
     js.mulr(JIT_R0, JIT_R0, JIT_R1);    /* accumulator *= argument */
-    js.putargr(JIT_R0, &ac);            /* Update the accumulator */
+    js.putargr(JIT_R0, &mut ac);        /* Update the accumulator */
     js.subi(JIT_R1, JIT_R1, 1);         /* argument -= 1 */
-    js.putargr(JIT_R1, &inp);           /* Update the argument */
+    js.putargr(JIT_R1, &mut inp);       /* Update the argument */
     let jump = js.jmpi();
     js.patch_at(&jump, &fact_entry);    /* Tail Call Optimize it! */
     js.patch(&fact_out);
